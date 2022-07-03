@@ -247,14 +247,15 @@ string compress(string str1, string str2)
 		g = str2.substr(48, 8), h = str2.substr(56, 8);//讲消息分成abcdefgh8组
 	unsigned int aa = trans(a), bb = trans(b), cc = trans(c), dd = trans(d),
 		ee = trans(e), ff = trans(f), gg = trans(g), hh = trans(h);
-	unsigned int ss1, ss2, tt1, tt2;
+	unsigned int ss1, ss2, tt1, tt2，temp1;
 	init_T();//初始化T数组
 	//64轮循环对8组消息进行操作
 	for (int i = 0; i < 64; i++)
 	{
-		ss1 = modleft((modleft(aa, 12) + ee + modleft(T[i], i)) & 0xffffffff, 7);
+		temp1 = modleft(aa, 12);
+		ss1 = modleft(( temp1+ ee + modleft(T[i], i)) & 0xffffffff, 7);
 		//SS1 ←((A << 12) + E + (Tj <<(j mod 32))) << 7
-		ss2 = ss1 ^ (modleft(aa, 12));//	SS2 ← SS1⊕(A <<12)
+		ss2 = ss1 ^ (temp1);//	SS2 ← SS1⊕(A <<12)
 		unsigned int temp = FF(aa, bb, cc, i) + dd + ss2 + trans(str1.substr((i + 68) * 8, 8));
 		tt1 = (FF(aa, bb, cc, i) + dd + ss2 + trans(str1.substr((i + 68) * 8, 8))) & 0xffffffff;//	TT1 ← FFj(A, B, C) + D + SS2 + W’j
 		tt2 = (GG(ee, ff, gg, i) + hh + ss1 + trans(str1.substr(i * 8, 8))) & 0xffffffff;//	TT2 ← GGj(E, F, G) + H + SS1 + Wj

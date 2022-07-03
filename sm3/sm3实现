@@ -1,1 +1,298 @@
+#include<iostream>
+#include<string>
+#include<cmath>
+#include <stdio.h>
+#include <stdlib.h>
+using namespace std;
+static unsigned int T[64] = { 0 };
+//data from dec to hex
+string tohex(unsigned int data)
+{
+	string hex = "";
+	int temp = data % 16;
+	while (data >= 1)
+	{
+		if (temp < 10 && temp>=0)
+		{
+			hex = to_string(temp)+hex;
+		}
+		else {
+			hex = char('a' + (temp - 10))+hex;
+		}
+		data /= 16;
+		temp = data % 16;
+	}
+	return hex;
+}
+string tohex8(unsigned int data)
+{
+	string hex = "";
+	int temp = data % 16;
+	while (data >= 1)
+	{
+		if (temp < 10 && temp >= 0)
+		{
+			hex = to_string(temp) + hex;
+		}
+		else {
+			hex = char('a' + (temp - 10)) + hex;
+		}
+		data /= 16;
+		temp = data % 16;
+	}
+	while (hex.size() != 8)
+	{
+		hex = '0' + hex;
+	}
+	return hex;
+}
+//对数据进行填充
+string padding(string str)
+{
+	string res = "";
+	for (int i = 0; i < str.size(); i++)
+	{
+		res += tohex((unsigned int)str[i]);
+	}
+	cout << "输入字符串ASCII码以16进制表示为：" << res << endl;
+	unsigned int length = res.size() * 4;//the length of data二进制
+	string reslen = tohex(length);//字符串长度转为16进制
+	//将比特“1”添加到消息的末尾，再添加k个“0”
+	res += '8';//在数据后面加1，之后填0
+	while (res.size() % 128 != 112)
+	{
+		res += '0';//在数据后面填0
+	}
+	while (reslen.size() != 16)
+	{
+		reslen = '0' + reslen;
+	}
+	res += reslen;
+	return res;//填充后的字符串
+}
+//16进制的字符串变为2进制字符串
+string hexto(string str)
+{
+	string bin = "";
+	for (int i = 0; i < str.size(); i++)
+	{
+		int binary = 0;
+		if (str[i] >= '0' && str[i] <= '9')binary = int(str[i] - '0');
+		else binary = str[i] - 'a' + 10;
+		for (int j = 0; j < 4;j++) {
+			(binary % 2) ? bin.push_back('1') :bin.push_back('0');
+			binary /= 2;
+		}
+		//reverse the order of the four data
+		swap(bin[i * 4], bin[4 * i + 3]);
+		swap(bin[i * 4 + 1], bin[i * 4 + 2]);
+	}
+	return bin;
+}
+//字符串2进制转十六进制
+string bintohex(string res)
+{
+	string r = "";
+	int temp = 0;
+	while (res.length() % 4 != 0)
+	{
+		res = '0' + res;
+	}//在前面补齐0
+	for (int i = 0; i < res.length(); i+=4)
+	{
+		temp = (res[i] - '0') * 8 + (res[i + 1] - '0') * 4 + (res[i + 2] - '0') * 2 + (res[i + 3] - '0');
+		if (temp < 10)r += to_string(temp);
+		else r += ('a'+(temp-10));
+	}
+	return r;
+}
+//字符串的异或操作
+string XOR(string str1, string str2)
+{
+	string r1 = hexto(str1);
+	string r2 = hexto(str2);
+	string res = "";
+	for (int i = 0; i < r1.length(); i++)
+	{
+		if (r1[i] == r2[i])res += '0';
+		else res+='1';
+	}
+	return bintohex(res);
+}
+//字符串循环左移
+string LeftShift(string str1, int len)
+{
+	string r = hexto(str1);
+	r = r.substr(len) + r.substr(0, len);
+	return bintohex(r);
+}
+string P1(string s)
+{
+	string str = hexto(s);
+	string str1 = str.substr(15) + str.substr(0, 15);
+	string res1 = "";
+	for (int i = 0; i < str1.length(); i++)
+	{
+		if (str1[i] == str[i])res1 += '0';
+		else res1+= '1';
+	}
+	string str2 = str.substr(23) + str.substr(0, 23);
+	string res = "";
+	for (int i = 0; i < str1.length(); i++)
+	{
+		if (res1[i] == str2[i])res += '0';
+		else res += '1';
+	}
+	return bintohex(res);
+}
+//消息扩展函数最终得到132个消息字，前16个消息字。
+//前68个消息字，后64个消息字
+string extention(string str)
+{
+	string res = str;//字符串类型，存储前68位
+	for (int i = 16; i < 68; i++)//根据公式生成17到68位的值
+	{
+		res += XOR(XOR(P1(XOR(XOR(res.substr((i - 16) * 8, 8), res.substr((i - 9) * 8, 8)), LeftShift(res.substr((i - 3) * 8, 8), 15))),LeftShift(res.substr((i-13)*8,8),7)), res.substr((i-6)*8,8));
+		//FOR j=16 TO 67
+		//Wj ← P1(Wj - 16⊕Wj - 9⊕(Wj - 3 <<15))
+		//⊕(Wj - 13 <<7)⊕Wj - 6
+	}
+	for (int i = 0; i < 64; i++)//生成64位wi'的值为wi^wi+4
+	{
+		res += XOR(res.substr(i * 8, 8), res.substr((i + 4) * 8, 8));
+	}
+	return res;
+}
+////加法当前位置计算
+//char add(char s1, char s2)
+//{
+//	return s1 == s2 ? '0' : '1';
+//}
+////与操作计算
+//char charand(char s1, char s2)
+//{
+//	return (s1 =='1'&& s2=='1') ? '1' : '0';
+//}
+////mod 2^32的加法运算
+//string modadd(string str1,string str2)
+//{
+//	string r1 = hexto(str1);
+//	string r2 = hexto(str2);
+//	char jin = '0';//存储低一位的进位
+//	string res = "";
+//	for (int i = r1.size() - 1; i >= 0; i--)
+//	{
+//		res = add(add(r1[i], r2[i]), jin) + res;
+//		if(charand(r1[i],r2[i])=='0')jin = '0'
+//	}
+//}
 
+// 十六进制字符串转为无符号整型
+unsigned int trans(string s)
+{
+	string r = hexto(s);
+	unsigned int n = 0;
+	for (int i = 0; i < 31; i++)
+	{
+		if (r[i] == '1')n += 1;
+		n *= 2;
+	}
+	if(r[31] == '1')n += 1;
+	return n;
+}
+//循环左移操作,
+unsigned int modleft(unsigned int a, unsigned int len)
+{
+	len = len % 32;
+	return ((a << len) & 0xffffffff) | ((a & 0xffffffff) >> (32 - len));
+}
+//T函数
+void init_T()
+{
+	int q = 0;
+	for (q = 0; q < 16; q++)T[q] = 0x79cc4519;
+	for (q = 16; q < 64; q++)T[q] = 0x7a879d8a;
+}
+//FF函数
+unsigned int FF(unsigned int x, unsigned int y, unsigned int z, int i)
+{
+	unsigned int res = 0;
+	if (i >= 0 && i < 16)res = x ^ y ^ z;
+	else if (i >= 16 && i < 64)res = (x & y) | (x & z) | (y & z);
+	return res;
+}
+//GG函数
+unsigned int GG(unsigned int x, unsigned int y, unsigned int z, int i)
+{
+	unsigned int res = 0;
+	if (i >= 0 && i < 16)res = x ^ y ^ z;
+	else if (i >= 16 && i < 64)res = (x & y) | (~x & z);
+	return res;
+}
+#define p0(x) x^(modleft(x,9))^(modleft(x,17))
+//消息压缩函数
+string compress(string str1, string str2)
+{
+	string a = str2.substr(0, 8), b = str2.substr(8, 8),
+		c = str2.substr(16, 8), d = str2.substr(24, 8),
+		e = str2.substr(32, 8), f = str2.substr(40, 8),
+		g = str2.substr(48, 8), h = str2.substr(56, 8);//讲消息分成abcdefgh8组
+	unsigned int aa = trans(a), bb = trans(b), cc = trans(c), dd = trans(d),
+		ee = trans(e), ff = trans(f), gg = trans(g), hh = trans(h);
+	unsigned int ss1, ss2, tt1, tt2 ;
+	init_T();//初始化T数组
+	//64轮循环对8组消息进行操作
+	for (int i = 0; i < 64; i++)
+	{
+		ss1 = modleft((modleft(aa,12)+ee+modleft(T[i],i))&0xffffffff, 7);
+		//SS1 ←((A << 12) + E + (Tj <<(j mod 32))) << 7
+		ss2 = ss1 ^ (modleft(aa, 12));//	SS2 ← SS1⊕(A <<12)
+		unsigned int temp = FF(aa, bb, cc, i) + dd + ss2 + trans(str1.substr((i + 68) * 8, 8));
+		tt1 = (FF(aa, bb, cc, i) + dd + ss2 + trans(str1.substr((i + 68) * 8, 8))) & 0xffffffff;//	TT1 ← FFj(A, B, C) + D + SS2 + W’j
+		tt2 = (GG(ee, ff, gg, i) + hh + ss1 + trans(str1.substr(i * 8, 8))) & 0xffffffff;//	TT2 ← GGj(E, F, G) + H + SS1 + Wj
+		dd = cc;//	D←C
+		cc = modleft(bb, 9); // C←B <<9
+		bb = aa;//	B←A
+		aa = tt1;//	A←TT1
+		hh = gg;//	H←G
+		gg = modleft(ff, 19);//	G←F <<19
+		ff = ee;//	F←E
+		ee = p0(tt2);//	E←P0(TT2)
+		cout << tohex(aa) << " " << tohex(bb) << " ";
+		cout << tohex(cc) << " " << tohex(dd) << " ";
+		cout << tohex(ee) << " " << tohex(ff) << " ";
+		cout << tohex(gg) << " " << tohex(hh) << " " << endl;
+	}
+	a = tohex8(aa); b = tohex8(bb); c = tohex8(cc); d = tohex8(dd);
+	e = tohex8(ee); f = tohex8(ff); g = tohex8(gg);h= tohex8(hh);
+	string res = a + b + c + d + e + f + g + h;
+	return res;
+}
+//迭代压缩函数实现
+string iter(string str)
+{
+	int n = str.size() / 128;
+	cout << n << "个消息分组" << endl;
+	string V = "7380166f4914b2b9172442d7da8a0600a96f30bc163138aae38dee4db0fb0e4e";
+	string b ,eb,cb;
+	for (int i = 0; i < n; i++)
+	{
+		//cout << to_string(i + 1) << "个消息分组" << endl;
+		b = str.substr(i * 128, 128);
+		eb = extention(b);//扩展函数
+		cb = compress(eb, V);//消息压缩
+		cout << V.size() << ' ' << cb.size() << endl;
+		V = XOR(V, cb);
+	}
+	return V;
+}
+int main()
+{
+	string str = "abc";//input string
+	cout << "输入消息为：" << str<<endl;
+	string pad = padding(str);
+	cout << "填充后的消息：" << pad << endl;
+	string result = iter(pad);
+	cout << "杂凑值为：" << result << endl;
+	return 0;
+}

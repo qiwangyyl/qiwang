@@ -2,9 +2,12 @@
 #include<string>
 #include<cmath>
 #include<thread>
+#include<ratio>
 #include <stdio.h>
 #include <stdlib.h>
+#include<chrono>
 using namespace std;
+using namespace std::chrono;
 static unsigned int T[64] = { 0 };
 //data from dec to hex
 string tohex(unsigned int data)
@@ -245,7 +248,7 @@ string compress(string str1, string str2)
 		g = str2.substr(48, 8), h = str2.substr(56, 8);//讲消息分成abcdefgh8组
 	unsigned int aa = trans(a), bb = trans(b), cc = trans(c), dd = trans(d),
 		ee = trans(e), ff = trans(f), gg = trans(g), hh = trans(h);
-	unsigned int ss1, ss2, tt1, tt2，temp1;
+	unsigned int ss1, ss2, tt1, tt2,temp1;
 	init_T();//初始化T数组
 	//64轮循环对8组消息进行操作
 	for (int i = 0; i < 64; i++)
@@ -297,9 +300,13 @@ int main()
 {
 	string str = "abc";//input string
 	cout << "输入消息为：" << str << endl;
+	high_resolution_clock::time_point t1 = high_resolution_clock::now();
 	string pad = padding(str);
 	cout << "填充后的消息：" << pad << endl;
 	string result = iter(pad);
+	high_resolution_clock::time_point t2 = high_resolution_clock::now();
 	cout << "杂凑值为：" << result << endl;
+	duration<double, std::milli>time_span = t2 - t1;
+	cout << double(time_span.count()) << "微妙" << endl;
 	return 0;
 }

@@ -2,10 +2,12 @@ from gmssl import sm3,func
 from hashlib import sha256
 import secrets
 from Crypto.Util import number
-A = 115792089210356248756420345214020892766250353991924191454421193933289684991996
-B = 18505919022281880113072981827955639221458448578012075254857346196103069175443
+A = 115792089210356248756420345214020892766250353991924191454421193933289684991996#0
+B = 18505919022281880113072981827955639221458448578012075254857346196103069175443#7
 G_X = 22963146547237050559479531362550074578802567295341616970375194840604139615431
+#55066263022277343669578718895168534326250603453777594175500187360389116729240
 G_Y = 85132369209828568825618990617112496413088388631904505083283536607588877201568
+#32670510020758816978083085130507043184471273380659243275938904335757337482424
 G = (G_X, G_Y)#G为基点
 # 有限域的阶
 P = 115792089210356248756420345214020892766250353991924191454421193933289684991999
@@ -73,6 +75,7 @@ def precomputation(ID,A,B,G_X,G_Y,pub_x,pub_y):
     pub_x=str(pub_x)
     pub_y=str(pub_y)
     ENTLA=str(bit_num(ID))#签名者A具有长度为entlen比特的可辨别标识ID，ENTLA是由整数entlen转换而成的两个字节
+    #print(ENTLA)
     cascading=ENTLA+ID+A+B+G_X+G_Y+pub_x+pub_y#级联
     cascading_bytes=bytes(cascading,encoding='utf-8')
     digest=sm3.sm3_hash(func.bytes_to_list(cascading_bytes))#转换为列表后利用库函数进行sm3的hash
@@ -82,16 +85,19 @@ def precomputation(ID,A,B,G_X,G_Y,pub_x,pub_y):
 #签名生成（r,s）
 def sign(private_key,mes,Z_A):
     mes2=Z_A+mes#m*=Z_A||m
-    mes2_bytes=bytes(mes,encoding='utf-8')
+    mes2_bytes=bytes(mes2,encoding='utf-8')
     e=sm3.sm3_hash(func.bytes_to_list(mes2_bytes))#e=Hash(m*)
     e=int(e,16)
-    k=secrets.randbelow(P)#0-P的随机数
+##    k=secrets.randbelow(P)#0-P的随机数
+    K_bytes=bytes(ID+str(A)+str(B)+mes,encoding='utf-8')
+    k=sm3.sm3_hash(func.bytes_to_list(K_bytes))
+    k=int(k,16)#RFC6979产生保密且唯一确定的数k
     #计算椭圆曲线点(x_1,y_1)=[k]G
     point1=elliptic_multiply(k,G)#该点为k*G
     print("生成的椭圆曲线上的点：",point1)
     #计算 r=(e+x_1)mod n
     r=(e+point1[0])%N
-    #计算s=((1+private_key)-1⋅(k−r⋅private_key))mod n
+    #计算s=((1+private_key)^(-1)⋅(k−r⋅private_key))mod n
     s=(number.inverse(1+private_key,N)*(k-r*private_key))%N
     return (r,s)
 #验证签名（r,s）
@@ -100,7 +106,7 @@ def verify(public_key,ID,mes,sig):
     s=sig[1]
     Z_A=precomputation(ID,A,B,G_X,G_Y,public_key[0],public_key[1])
     mes2=Z_A+mes#m*=Z_A||m
-    mes2_bytes=bytes(mes,encoding='utf-8')
+    mes2_bytes=bytes(mes2,encoding='utf-8')
     e=sm3.sm3_hash(func.bytes_to_list(mes2_bytes))#e=Hash(m*)
     e=int(e,16)
     t=(r+s)%N

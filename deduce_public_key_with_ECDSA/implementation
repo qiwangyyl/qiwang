@@ -2,20 +2,15 @@ from gmssl import sm3,func
 from hashlib import sha256
 import secrets
 from Crypto.Util import number
-A = 115792089210356248756420345214020892766250353991924191454421193933289684991996#0
-B = 18505919022281880113072981827955639221458448578012075254857346196103069175443#7
+A = 115792089210356248756420345214020892766250353991924191454421193933289684991996
+B = 18505919022281880113072981827955639221458448578012075254857346196103069175443
 G_X = 22963146547237050559479531362550074578802567295341616970375194840604139615431
-#55066263022277343669578718895168534326250603453777594175500187360389116729240
 G_Y = 85132369209828568825618990617112496413088388631904505083283536607588877201568
-#32670510020758816978083085130507043184471273380659243275938904335757337482424
 G = (G_X, G_Y)#G为基点
 # 有限域的阶
 P = 115792089210356248756420345214020892766250353991924191454421193933289684991999
-#115792089237316195423570985008687907853269984665640564039457584007908834671663
 # 椭圆曲线的阶
 N = 115792089210356248756420345214020892766061623724957744567843809356293439045923
-#115792089237316195423570985008687907852837564279074904382605163141518161494337
-
 #椭圆曲线上的不同点加法运算
 def elliptic_add(p,q):
     if p==0 and q==0:return 0
@@ -60,73 +55,78 @@ def generate_key():
     pubkey=elliptic_multiply(prikey,G)
     return prikey,pubkey
 
-#计算比特位
-def bit_num(x):
-    if isinstance(x,str):
-        return len(x.encode())<<3#一个字节8个比特
-    
-#预计算部分，传入参数包括：ID,椭圆曲线参数A,B,G点的横纵坐标G_X,G_Y,公钥的横纵坐标public_key[0],public_key[1] 
-def precomputation(ID,A,B,G_X,G_Y,pub_x,pub_y):
-    #将必要信息转化为字符串，以便转化为字节对象进行操作
-    A=str(A)
-    B=str(B)
-    G_X=str(G_X)
-    G_Y=str(G_Y)
-    pub_x=str(pub_x)
-    pub_y=str(pub_y)
-    ENTLA=str(bit_num(ID))#签名者A具有长度为entlen比特的可辨别标识ID，ENTLA是由整数entlen转换而成的两个字节
-    #print(ENTLA)
-    cascading=ENTLA+ID+A+B+G_X+G_Y+pub_x+pub_y#级联
-    cascading_bytes=bytes(cascading,encoding='utf-8')
-    digest=sm3.sm3_hash(func.bytes_to_list(cascading_bytes))#转换为列表后利用库函数进行sm3的hash
-    #print(type(digest))
-    return digest#计算出Z_A=H256(ENTLA||ID||a||b||G_X||G_Y||pub_x||pub_y)
-
 #签名生成（r,s）
-def sign(private_key,mes,Z_A):
-    mes2=Z_A+mes#m*=Z_A||m
-    mes2_bytes=bytes(mes2,encoding='utf-8')
-    e=sm3.sm3_hash(func.bytes_to_list(mes2_bytes))#e=Hash(m*)
-    e=int(e,16)
-##    k=secrets.randbelow(P)#0-P的随机数
-    K_bytes=bytes(ID+str(A)+str(B)+mes,encoding='utf-8')
-    k=sm3.sm3_hash(func.bytes_to_list(K_bytes))
-    k=int(k,16)#RFC6979产生保密且唯一确定的数k
-    #计算椭圆曲线点(x_1,y_1)=[k]G
+def sign(private_key,mes):
+    e=hash(mes)
+    print("e",e)
+    k=secrets.randbelow(P)#0-P的随机数
     point1=elliptic_multiply(k,G)#该点为k*G
     print("生成的椭圆曲线上的点：",point1)
-    #计算 r=(e+x_1)mod n
-    r=(e+point1[0])%N
-    #计算s=((1+private_key)^(-1)⋅(k−r⋅private_key))mod n
-    s=(number.inverse(1+private_key,N)*(k-r*private_key))%N
+    r=point1[0]%P
+    #计算s=((k)^(-1)⋅(e+r⋅private_key))mod n
+    s=(number.inverse(k,N)*(e+r*private_key))%N
     return (r,s)
-#验证签名（r,s）
-def verify(public_key,ID,mes,sig):
+'''计算二次剩余x^2=y(mod p)'''
+def QR(y,p):
+    if pow(y,(p-1)//2,p)!=1:
+        return
+    if p%4==3:
+        return pow(y,(p+1)//4,p)
+    #计算p-1=(2^s)*q
+    q=p-1
+    s=0
+    while q%2==0:
+        q=q//2
+        s+=1
+    r=pow(y,(q+1)//2,p)
+    r0=pow(y,q,p)
+    for z in range(2,p):
+        if pow(z,(p-1)//2,p)==p-1:
+            c=pow(z,q,p)
+            break
+    #找到p的一个二次非剩余z，计算c为z^q%p
+    m=s
+    if r0==1:
+        return r#如果y^q==1则r=x
+    i=0
+    while r0!=1:#利用计算出的y^q，计算其二次方是否为1%p,若不是则乘c^(2^(m-i-1))继续判断其二次方
+        temp=pow(r0,2**(i+1),p)
+        i+=1
+        if temp%p==1:
+            b=pow(c,2**(m-i-1),p)#b=c^(2^(m-i-1))%p
+            r=r*b%p
+            c=b*b%p
+            r0=r0*c%p#计算r的二次方
+            m=i
+            i=0
+    return r
+'''根据签名内容反推公钥'''
+def deduce_public_key(sig,mes):
     r=sig[0]
     s=sig[1]
-    Z_A=precomputation(ID,A,B,G_X,G_Y,public_key[0],public_key[1])
-    mes2=Z_A+mes#m*=Z_A||m
-    mes2_bytes=bytes(mes2,encoding='utf-8')
-    e=sm3.sm3_hash(func.bytes_to_list(mes2_bytes))#e=Hash(m*)
-    e=int(e,16)
-    t=(r+s)%N
-    point1=elliptic_multiply(s,G)
-    point2=elliptic_multiply(t,public_key)
-    point=elliptic_add(point1,point2)
-    x1=point[0]
-    R=(e+x1)%N
-    print('R',R)
-    print('r',r)
-    return R==r
+    x=r%P
+    y2=((x**3)+A*x+B)#y^2=x^3+Ax+B
+    y=QR(y2,P)
+    print('y',y)
+    point1=(x,y)
+    point2=(x,P-y)#可能计算出y或-y
+    e=hash(mes)
+    print("e",e)
+    eG=elliptic_multiply(e%N,G)
+    fu_eG=(eG[0],P-eG[1])#计算-e[G]
+    skG1=elliptic_multiply(s%N,point1)
+    sk_eG1=elliptic_add(skG1,fu_eG)#(sk-e)[G]即为rd[G]
+    d1=elliptic_multiply(number.inverse(r,N),sk_eG1)
+    skG2=elliptic_multiply(s%N,point2)
+    sk_eG2=elliptic_add(skG2,fu_eG)#(sk-e)[G]即为rd[G]
+    d2=elliptic_multiply(number.inverse(r,N),sk_eG2)
+    return d1,d2
+    
     
 private_key,public_key=generate_key()
-print("公钥：",public_key)
-print("私钥：",private_key)
-mes="qiwangyyl"
-ID='2020'
-Z_A=precomputation(ID,A,B,G_X,G_Y,public_key[0],public_key[1])
-#print(Z_A)
-sig=sign(private_key,mes,Z_A)
+print("真实公钥：",public_key)
+mes="qiwang"
+sig=sign(private_key,mes)
 print("签名：",sig)
-if verify(public_key,ID,mes,sig)==1:
-    print("验证通过")
+pub1,pub2=deduce_public_key(sig,mes)
+print('推测公钥为：',pub1,"或",pub2)

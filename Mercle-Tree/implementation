@@ -1,1 +1,73 @@
 
+from hashlib import sha256
+import string
+import random
+#定义信息中的字符范围:字母、数字、标点
+InfoArea=string.ascii_letters+string.digits+string.punctuation
+#叶子节点级联前缀0x00
+def x00(info):
+    return hex(0)+info
+#中间节点级联前缀0x01
+def x01(info1,info2):
+    return hex(1)+info1+info2
+#采用sha256进行hash
+def HASH(info):
+    return sha256(info.encode('utf-8')).hexdigest()
+#建立一个类以建立默克树
+class MerkleTree:
+    def __init__(self,info):
+        self.l=info
+        self.root,self.r=self.merkle()
+        
+    def merkle(self):
+        llist=[]
+        lr=dict()#字典标记左右
+        depth=0#计数
+        if len(self.l)==0:
+            llist=sha256().hexdigest()
+            print("depth为0")
+            return llist,{}#仅有根节点,hash空消息
+        elif len(self.l)==1:
+            llist.append(HASH(x00(self.l[0])))
+            print('depth为1')
+            return llist,{}#仅有一个叶子节点
+        else:#大于等于2个叶子节点
+            for i in self.l:
+                llist.append(HASH(i))#存储所有节点的hash值
+            while len(llist)>1:#逐层迭代进行计算
+                depth+=1
+                temp=[]
+                if len(llist)%2==0:
+                    while len(llist)>1:
+                        x=llist.pop(0)
+                        y=llist.pop(0)
+                        lr[x]=0
+                        lr[y]=1
+                        temp.append(HASH(x01(x,y)))
+                    #llist=temp
+                else:#节点个数为单数，则将最后一个节点放在最右面
+                    last=llist.pop(-1)
+                    while len(llist)>1:
+                        x=llist.pop(0)
+                        y=llist.pop(0)
+                        lr[x]=0
+                        lr[y]=1
+                        temp.append(HASH(x01(x,y)))
+                    temp.append(last)
+                    lr[last]=1
+                llist=temp
+            depth+=1
+            print('depth为',depth)
+            return llist[0],lr
+        
+
+
+#建立具有指定个数的叶子节点的默克树
+def build(m):
+    
+
+
+#十万个叶子节点
+build(100000)
+#存在性证明
+

@@ -1,4 +1,3 @@
-
 from hashlib import sha256
 import string
 import random
@@ -16,8 +15,8 @@ def HASH(info):
 #建立一个类以建立默克树
 class MerkleTree:
     def __init__(self,info):
-        self.l=info
-        self.root,self.r=self.merkle()
+        self.l=info#所有叶子
+        self.root,self.lr=self.merkle()
         
     def merkle(self):
         llist=[]
@@ -60,6 +59,32 @@ class MerkleTree:
             print('depth为',depth)
             return llist[0],lr
         
+        def path(self,m,llist):
+            k=0
+            p=[]
+            if len(llist)==2:
+                p.append(llist[m])
+                return p
+            elif len(llist)>2:
+                for i in range(1,len(llist)):
+                    if pow(2,i)>=len(llist):
+                        k=pow(2,i-1)
+                        break
+                if m<k:
+                    p.extend(self.path(m,llist[0:k}))
+                    p.append()
+        def paths(self,m):#第m位置的路径
+            llist=[]
+            if len(self.l)>1:
+                for i in range(0,len(self.l)):
+                    llist.append(HASH(self.l[i]))
+                return self.path(m,llist)
+            elif len(self.l)==1:
+                return{}
+            else:
+                return 0
+        def proof(self,m,leaf):
+            
 
 
 #建立具有指定个数的叶子节点的默克树
@@ -70,4 +95,3 @@ def build(m):
 #十万个叶子节点
 build(100000)
 #存在性证明
-

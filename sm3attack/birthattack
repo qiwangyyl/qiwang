@@ -1,10 +1,10 @@
 import binascii
-from gmssl import sm3,func
+from gmssl import sm3,func#引入库函数进行hash
 import os
 def sm3_hash(data):
     return sm3.sm3_hash(func.bytes_to_list(data))
 def birthday_attack():
-  while (True):
+  while (True):#随机碰撞，选择计算hash后相等的两个值，时间复杂度仍然很高
     random1=os.urandom(32)
     random2=os.urandom(32)
     msg1=sm3_hash(random1)

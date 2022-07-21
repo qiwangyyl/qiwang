@@ -33,7 +33,7 @@ class MerkleTree:
         else:#大于等于2个叶子节点
             for i in self.l:
                 #print(i)
-                llist.append(HASH(i))#存储所有节点的hash值
+                llist.append(HASH(x00(i)))#存储所有节点的hash值
             while len(llist)>1:#逐层迭代进行计算
                 depth+=1
                 temp=[]
@@ -89,7 +89,7 @@ class MerkleTree:
         llist=[]
         if len(self.l)>1:
             for i in range(0,len(self.l)):
-                llist.append(HASH(self.l[i]))
+                llist.append(HASH(x00(self.l[i])))
             return self.path(m,llist)
         elif len(self.l)==1:
             return{}
@@ -99,7 +99,7 @@ class MerkleTree:
     def proof(self,m,leaf):
         PATH=self.paths(m)
         #print(self.paths(m))
-        hashleaf=HASH(leaf)
+        hashleaf=HASH(x00(leaf))
         for i in PATH:
             if self.lr[i]==0:#节点位置在左
                 hashleaf=HASH(x01(i,hashleaf))
@@ -112,7 +112,11 @@ class MerkleTree:
         else:
             return False
 
-#建立具有指定个数的叶子节点的默克树
+        
+        
+
+
+#建立具有指定个数的默克树的所有叶子节点
 def build(m):
     leaflist=['1','2']
     lrandom=''

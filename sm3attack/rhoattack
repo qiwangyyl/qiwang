@@ -349,21 +349,5 @@ int main()
 		list[i].output = "";
 	}
 	rhoattack();
-	//while (true)
-	//{
-	//	string str1 = rand_str(3);//input string
-	//	string str2 = rand_str(3);//input string
-	//	string pad1 = padding(str1);
-	//	string pad2 = padding(str2);
-	//	string result1 = iter(pad1);
-	//	string result2 = iter(pad2);
-	//	if (result1 == result2)
-	//	{
-	//		cout << "输入消息为：" << str1 << endl;
-	//		cout << "输入消息为：" << str2 << endl;
-	//		cout << result1 << endl;
-	//		break;
-	//	}
-	//}
 	return 0;
 }

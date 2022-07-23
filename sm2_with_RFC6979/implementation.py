@@ -102,6 +102,8 @@ def sign(private_key,mes,Z_A):
 def verify(public_key,ID,mes,sig):
     r=sig[0]
     s=sig[1]
+    if r<1 or r>N-1 or s<1 or s>N-1:
+        return 0
     Z_A=precomputation(ID,A,B,G_X,G_Y,public_key[0],public_key[1])
     mes2=Z_A+mes#m*=Z_A||m
     mes2_bytes=bytes(mes2,encoding='utf-8')

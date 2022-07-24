@@ -1,8 +1,8 @@
 import socket
 import time
-from gmssl import sm3, func
+from gmssl import func
 from gmssl.sm4 import CryptSM4, SM4_ENCRYPT, SM4_DECRYPT
-from hashlib import sha256
+from hashlib import sha256,md5
 import random
 from Crypto.Util import number
 MaxBytes=1024*1024
@@ -115,14 +115,13 @@ def encrypt(data,public_key):
 
   
 def create_key(data):#生成对称加密密钥，长度16的字符串
-    m= hashlib.md5()
+    m= md5()
     m.update(data.encode("utf-8"))
     n=m.hexdigest()
     return n[0:16]
 
-MaxBytes=1024*1024
 host ='127.0.0.1'
-port = 80
+port = 11223
 client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 client.settimeout(30)
 client.connect((host,port))
@@ -142,7 +141,7 @@ while True:
     crypt_sm4 = CryptSM4()
     crypt_sm4.set_key(key, SM4_ENCRYPT)
     encrypt_data = crypt_sm4.crypt_ecb(inputData.encode())  # 对称密钥加密信息
-    enc_key = encrypt(key)#对密钥进行加密，利用公钥
+    enc_key = encrypt(key,public_key)#对密钥进行加密，利用公钥
     sendBytes = client.send(encrypt_data)#客户端发送数据
     sendBytes2= client.send(enc_key)
     print("客户端发送了："+inputData)

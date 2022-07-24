@@ -4,7 +4,7 @@ import random
 import math
 import binascii
 from Crypto.Util import number
-from gmssl import sm2, func
+from gmssl import func
 from gmssl.sm4 import CryptSM4, SM4_ENCRYPT, SM4_DECRYPT
 MaxBytes=1024*1024
 A = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC
@@ -126,7 +126,7 @@ server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 server.settimeout(60)
 host = '127.0.0.1'
 host = socket.gethostname()
-port = 80
+port = 11223
 server.bind((host, port))        # 绑定端口
 server.listen(1)                      # 监听
 try:
@@ -143,7 +143,7 @@ try:
         print(localTime,' 接收到数据字节数:',len(data))
         ###数据解密
 
-        dec_key =decrypt(enc_key)#解出密钥，利用私钥
+        dec_key =decrypt(enc_key,private_key)#解出密钥，利用私钥
         print("得到密钥："+dec_key.decode())
         iv = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         # bytes类型
@@ -160,5 +160,3 @@ except BaseException as e:
 finally:
     server.close()                    # 关闭连接
     print("关闭链接")
-
-

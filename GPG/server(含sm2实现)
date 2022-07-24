@@ -1,0 +1,164 @@
+import socket
+import time
+import random
+import math
+import binascii
+from Crypto.Util import number
+from gmssl import sm2, func
+from gmssl.sm4 import CryptSM4, SM4_ENCRYPT, SM4_DECRYPT
+MaxBytes=1024*1024
+A = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC
+B = 0x28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93
+# 有限域的阶
+P = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF
+G_X = 0x32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7
+G_Y = 0xbc3736a2f4f6779c59bdcee36b692153d0a9877cc62a474002df32e52139f0a0
+# 椭圆曲线的阶
+N = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123
+G = (G_X, G_Y)#G为基点
+
+#椭圆曲线上的不同点加法运算
+def elliptic_add(p,q):
+    if p==0 and q==0:return 0
+    elif p==0:return q
+    elif q==0:return p
+    else:
+        #保证p[0]<=q[0]
+        if p[0]>q[0]:
+            temp=p
+            p=q
+            q=temp
+        r=[]
+        #当P！=Q时，两点纵坐标相减的值与横坐标相减的值相除就是直线的斜率
+        slope=(q[1]-p[1])*number.inverse(q[0]-p[0],P)%P
+        r.append((slope**2-p[0]-q[0])%P)
+        r.append((slope*(p[0]-r[0])-p[1])%P)
+        return (r[0],r[1])
+#椭圆曲线上的同一点加法运算（*2运算）
+def elliptic_double(p):
+    #当P=Q，计算过P(Q)点切线的斜率为椭圆曲线公式两边求导相除：λ = (3*p[0]² + A)/2*p[1]
+    r=[]
+    slope=(3*(p[0]**2) + A)*number.inverse(2*p[1],P)%P
+    r.append((slope**2-2*p[0])%P)
+    r.append((slope*(p[0]-r[0])-p[1])%P)
+    return (r[0],r[1])
+#椭圆曲线上的乘法运算
+def elliptic_multiply(s,p):
+    n=p
+    r=0#无穷远点
+    s_bin=bin(s)[2:]#转化为二进制
+    s_len=len(s_bin)#二进制长度
+    for i in reversed(range(s_len)):#从s_len-1到0逐位计算
+        if s_bin[i]=='1':
+            r=elliptic_add(r,n)
+        n=elliptic_double(n)#n乘2,继续循环
+    return r
+
+def shash(s):
+    sha=sha256()
+    sha.update(s.encode())
+    return sha.hexdigest()
+
+def KDF(x,klen):
+    c=1
+    k=""
+    for i in range(klen//256):
+        k+=shash(x+bin(c)[2:].zfill(32))
+        c+=1
+    #取剩余部分
+    if klen%256!=0:
+        k+=shash(x+bin(c)[2:].zfill(32))[:(klen-int(klen//256)*256)//4]
+    return bin(int(K,16))[2:].zfill(klen)
+
+def bin_xor(m,t):
+    res=""
+    for i in range(len(s)):
+        if s[i]==t[i]:
+            res+='0'
+        else:
+            res+='1'
+    return res
+
+def dec(c,sk):
+    clen=len(c)
+    hexC1=c[:130]
+    hexC2=c[130:clen-64]
+    hexC3=c[clen-64:]
+    if int(hexC1[:2],16)==4:
+        C1=(int(hexC1[-128:-64],16),int(hexC1[-64:],16))
+    else:
+        print("密文有误")
+    Cb=elliptic_multiply(sk,C1)
+    x_2=bin(Cb[0])[2:].zfill(256)
+    y_2=bin(Cb[1])[2:].zfill(256)
+    binlenC2=len(hexC2)*4
+    binC2=bin(int(hexC2,16))[2:].zfill(binlenC2)
+    t=KDF(x_2+y_2,len(C2))
+    binm=bin_xor(binC2,t)
+    u=shash(x_2+binm+y_2)
+    if u!=hexC3:
+        print("解密明文非原明文")
+    hexm=hex(int(binm,2))[2:].zfill(len(binm)//4)
+    return hexm  
+
+def decrypt(data,private_key):
+    grouplen=(2048+256+520)//4
+    clist=[]
+    for i in range (len(data)//grouplen):
+        addr=i*grouplen
+        clist.append(data[addr:addr+grouplen])
+    if len(data)%grouplen!=0:
+        clist.append(data[grouplen*(i+1):])
+    #无填充分组
+    plain=""
+    for c in clist:
+        plain+=dec(c,private_key)
+    res=basiic.a2b_hex(plain).decode()
+    return res
+
+def generate_key():
+    private_key=random.randint(1,N)
+    public_key=elliptic_multiply(private_key,G)
+    return private_key,public_key
+
+private_key,public_key=generate_key()    
+server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+server.settimeout(60)
+host = '127.0.0.1'
+host = socket.gethostname()
+port = 80
+server.bind((host, port))        # 绑定端口
+server.listen(1)                      # 监听
+try:
+    client,addr = server.accept()          # 等待客户端连接
+    print(addr," 客户端连接")
+    client.send(public_key.encode())#向客户端发送公钥
+    while True:
+        data = client.recv(MaxBytes)#服务器接受数据
+        enc_key = client.recv(MaxBytes)#接受加密的密钥
+        if not data:
+            print('数据为空，链接中断')
+            break
+        localTime = time.asctime( time.localtime(time.time()))
+        print(localTime,' 接收到数据字节数:',len(data))
+        ###数据解密
+
+        dec_key =decrypt(enc_key)#解出密钥，利用私钥
+        print("得到密钥："+dec_key.decode())
+        iv = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        # bytes类型
+        crypt_sm4 = CryptSM4()
+        crypt_sm4.set_key(dec_key, SM4_DECRYPT)
+        dec_data = crypt_sm4.crypt_ecb(data)  #利用得到的对称密钥，解出数据
+        print("解密数据成功")
+        print(dec_data.decode())
+        client.send(("服务器收到"+dec_data.decode()).encode())
+
+except BaseException as e:
+    print("出现异常：")
+    print(repr(e))
+finally:
+    server.close()                    # 关闭连接
+    print("关闭链接")
+
+

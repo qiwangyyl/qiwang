@@ -13,6 +13,7 @@ IP逆置换：是初始置换的逆过程，DES最后一轮后，左、右两半
 # 运行指导
 在idel上运行
 # 截图
+![image](https://user-images.githubusercontent.com/105595347/181130982-e600837d-d6e3-4789-b27b-2ca94f8c9165.png)
 
 # 贡献
 王淇独立完成

@@ -1,7 +1,7 @@
 1.小组成员王淇，账户名称wqlly,个人独立完成。
 2.
 3.完成项目：
-implement the naïve birthday attack of reduced SM3
+implement the naïve birthday attack of reduced SM3  
 implement the Rho method of reduced SM3
 implement length extension attack for SM3
 do your best to optimize SM3 implementation (software)

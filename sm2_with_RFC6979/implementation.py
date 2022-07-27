@@ -39,7 +39,7 @@ def elliptic_double(p):
 #椭圆曲线上的乘法运算
 def elliptic_multiply(s,p):
     n=p
-    r=(0,0)#无穷远点
+    r=[0,0]#无穷远点
     s_bin=bin(s)[2:]#转化为二进制
     s_len=len(s_bin)#二进制长度
     for i in reversed(range(s_len)):#从s_len-1到0逐位计算

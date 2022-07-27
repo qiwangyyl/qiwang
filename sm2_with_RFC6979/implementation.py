@@ -9,16 +9,13 @@ G_Y = 85132369209828568825618990617112496413088388631904505083283536607588877201
 G = (G_X, G_Y)#G为基点
 # 有限域的阶
 P = 115792089210356248756420345214020892766250353991924191454421193933289684991999
-#115792089237316195423570985008687907853269984665640564039457584007908834671663
 # 椭圆曲线的阶
 N = 115792089210356248756420345214020892766061623724957744567843809356293439045923
-#115792089237316195423570985008687907852837564279074904382605163141518161494337
-
 #椭圆曲线上的不同点加法运算
 def elliptic_add(p,q):
-    if p==0 and q==0:return 0
-    elif p==0:return q
-    elif q==0:return p
+    if p==[0,0] and q==[0,0]:return [0,0]
+    elif p==[0,0]:return q
+    elif q==[0,0]:return p
     else:
         #保证p[0]<=q[0]
         if p[0]>q[0]:
@@ -42,7 +39,7 @@ def elliptic_double(p):
 #椭圆曲线上的乘法运算
 def elliptic_multiply(s,p):
     n=p
-    r=0#无穷远点
+    r=(0,0)#无穷远点
     s_bin=bin(s)[2:]#转化为二进制
     s_len=len(s_bin)#二进制长度
     for i in reversed(range(s_len)):#从s_len-1到0逐位计算
@@ -102,8 +99,6 @@ def sign(private_key,mes,Z_A):
 def verify(public_key,ID,mes,sig):
     r=sig[0]
     s=sig[1]
-    if r<1 or r>N-1 or s<1 or s>N-1:
-        return 0
     Z_A=precomputation(ID,A,B,G_X,G_Y,public_key[0],public_key[1])
     mes2=Z_A+mes#m*=Z_A||m
     mes2_bytes=bytes(mes2,encoding='utf-8')

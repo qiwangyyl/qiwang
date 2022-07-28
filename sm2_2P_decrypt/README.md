@@ -6,6 +6,7 @@
 运行在IDEL上
 # 截图
 ![image](https://user-images.githubusercontent.com/105595347/181579622-2c12bf1d-7741-4dd1-86dc-9d87bdbbf6e2.png)
+![image](https://user-images.githubusercontent.com/105595347/181580669-7567acdc-963d-48d1-93c0-d874354e24c3.png)
 
 # 贡献
 王淇独立完成

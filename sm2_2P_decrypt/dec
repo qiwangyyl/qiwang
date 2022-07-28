@@ -1,1 +1,179 @@
+import socket
+import time
+import random
+import math
+from hashlib import sha256
+from Crypto.Util import number
+MaxBytes=1024*1024
+A = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC
+B = 0x28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93
+# 有限域的阶
+P = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF
+G_X = 0x32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7
+G_Y = 0xbc3736a2f4f6779c59bdcee36b692153d0a9877cc62a474002df32e52139f0a0
+# 椭圆曲线的阶
+N = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123
+G = (G_X, G_Y)#G为基点
+def elliptic_sub(p,q):
+    if p==q:return (0,0)
+    elif p==[0,0]:return (q[0],P-q[1])
+    elif q==[0,0]:return (p[0],p[1])
+    else:
+        q[1]=P-q[1]
+        r=[]
+        #当P！=Q时，两点纵坐标相减的值与横坐标相减的值相除就是直线的斜率
+        slope=(q[1]-p[1])*number.inverse(q[0]-p[0],P)%P
+        r.append((slope**2-p[0]-q[0])%P)
+        r.append((slope*(p[0]-r[0])-p[1])%P)
+        return (r[0],r[1])
+def elliptic_add(p,q):
+    if p==[0,0] and q==[0,0]:return [0,0]
+    elif p==[0,0]:return q
+    elif q==[0,0]:return p
+    else:
+        #保证p[0]<=q[0]
+        if p[0]>q[0]:
+            temp=p
+            p=q
+            q=temp
+        r=[]
+        #当P！=Q时，两点纵坐标相减的值与横坐标相减的值相除就是直线的斜率
+        slope=(q[1]-p[1])*number.inverse(q[0]-p[0],P)%P
+        r.append((slope**2-p[0]-q[0])%P)
+        r.append((slope*(p[0]-r[0])-p[1])%P)
+        return (r[0],r[1])
+#椭圆曲线上的同一点加法运算（*2运算）
+def elliptic_double(p):
+    #当P=Q，计算过P(Q)点切线的斜率为椭圆曲线公式两边求导相除：λ = (3*p[0]² + A)/2*p[1]
+    r=[]
+    slope=(3*(p[0]**2) + A)*number.inverse(2*p[1],P)%P
+    r.append((slope**2-2*p[0])%P)
+    r.append((slope*(p[0]-r[0])-p[1])%P)
+    return (r[0],r[1])
+#椭圆曲线上的乘法运算
+def elliptic_multiply(s,p):
+    n=p
+    r=[0,0]#无穷远点
+    s_bin=bin(s)[2:]#转化为二进制
+    s_len=len(s_bin)#二进制长度
+    for i in reversed(range(s_len)):#从s_len-1到0逐位计算
+        if s_bin[i]=='1':
+            r=elliptic_add(r,n)
+        n=elliptic_double(n)#n乘2,继续循环
+    return r
+def shash(s):
+    sha=sha256()
+    sha.update(s.encode())
+    return sha.hexdigest() 
+def KDF(x,klen):
+    c=1
+    k=""
+    for i in range(klen//256):
+        k+=shash(x+bin(c)[2:].zfill(32))
+        c+=1
+    #取剩余部分
+    if klen%256!=0:
+        k+=shash(x+bin(c)[2:].zfill(32))[:(klen-int(klen//256)*256)//4]
+    K=bin(int(k,16))[2:].zfill(klen)
+    return bin(int(K,16))[2:].zfill(klen)
+def bin_xor(s,t):
+    res=""
+    for i in range(len(s)):
+        if s[i]==t[i]:
+            res+='0'
+        else:
+            res+='1'
+    return res
+def decrypt(c,sk):
+    clen=len(c)
+    hexC1=c[:130]
+    hexC2=c[130:clen-64]
+    hexC3=c[clen-64:]
+    if int(hexC1[:2],16)==4:
+        C1=(int(hexC1[-128:-64],16),int(hexC1[-64:],16))
+    else:
+        print("密文有误")
+    Cb=elliptic_multiply(sk,C1)
+    x_2=bin(Cb[0])[2:].zfill(256)
+    y_2=bin(Cb[1])[2:].zfill(256)
+    binlenC2=len(hexC2)*4
+    binC2=bin(int(hexC2,16))[2:].zfill(binlenC2)
+    t=KDF(x_2+y_2,len(binC2))
+    binm=bin_xor(binC2,t)
+    u=shash(x_2+binm+y_2)
+    begin = 0
+    MM_ming_bin = ''
+    for i in  binm:
+        if i == '1':
+            begin = 1
+        if begin == 1:
+            MM_ming_bin += i
+    MM_ming = bytes.fromhex(hex(int(MM_ming_bin,2))[2:])
+    print("解密生成的字符串为： " + str(MM_ming.decode()))
+    return str(MM_ming)  
+server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+server.settimeout(60)
+host = '127.0.0.1'
+#host = socket.gethostname()
+port = 11223
+server.bind((host, port))        # 绑定端口
+server.listen(1)# 监听
 
+try:
+    client,addr = server.accept()          # 等待客户端连接
+    print(addr," 客户端连接")
+    d1=0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D5412
+    client.send(str(d1).encode())#向客户端发送
+##    d2 = client.recv(MaxBytes)#服务器接受数据
+##    d=number.inverse(d1*d2,P)%P-1
+    
+    p0=int(client.recv(MaxBytes).decode())#服务器接受公钥
+    p1=int(client.recv(MaxBytes).decode())#服务器接受公钥
+    p=(p0,p1)
+    C = client.recv(MaxBytes).decode()#接受加密的C
+    clen=len(C)
+    hexC1=C[:130]
+    hexC2=C[130:clen-64]
+    hexC3=C[clen-64:]
+    if int(hexC1[:2],16)==4:
+        C1=[int(hexC1[-128:-64],16),int(hexC1[-64:],16)]
+        print(C1)
+    else:
+        print("密文有误")
+    T1=elliptic_multiply(number.inverse(d1,P),C1)
+    client.send(str(T1[0]).encode())#发送
+    client.send(str(T1[1]).encode())#发送
+    T20 = client.recv(MaxBytes).decode()#接受
+    T21 = client.recv(MaxBytes).decode()#接受
+    T2=[int(T20),int(T21)]
+    ###数据解密
+    kP=elliptic_sub(T2,C1)
+    print('kP',kP)
+    x_2=bin(kP[0])[2:].zfill(256)
+    y_2=bin(kP[1])[2:].zfill(256)
+    binlenC2=len(hexC2)*4
+    binC2=bin(int(hexC2,16))[2:].zfill(binlenC2)
+    t=KDF(x_2+y_2,len(binC2))
+    binm=bin_xor(binC2,t)
+    u=shash(x_2+binm+y_2)
+    begin = 0
+    MM_ming_bin = ''
+    for i in  binm:
+        if i == '1':
+            begin = 1
+        if begin == 1:
+            MM_ming_bin += i
+    MM_ming = bytes.fromhex(hex(int(MM_ming_bin,2))[2:])
+    localTime = time.asctime( time.localtime(time.time()))
+    print(localTime,' 接收到数据字节数:',len(MM_ming))
+    d=0x22aacda8e816d6bfd01cd50a5cf12b7574c7d6ad660435dd8855e993749bd589
+    #print("解密生成的字符串为： " + decrypt(C,d))
+    print("解密数据成功")
+    client.send(("服务器收到"+decrypt(C,d)).encode())
+
+except BaseException as e:
+    print("出现异常：")
+    print(repr(e))
+finally:
+    server.close()                    # 关闭连接
+    print("关闭链接")

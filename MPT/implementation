@@ -1,1 +1,167 @@
+from hashlib import sha256
+import time
+class extension:#扩展节点
+    def __init__(self):
+        self.type='extension'
+        self.key=None
+        self.value=branch()#branch节点作为extension节点组成元素
+        self.prefix=None#前缀初始化为空
+        self.nodehash=None#节点的hash值
+        self.nodevalue=None#节点下数据的hash值
+        
+class leaf:#叶子节点
+    def __init__(self):
+        self.type='leaf'
+        self.key=None
+        self.value=None
+        self.prefix=None#前缀初始化为空
+        self.nodehash=None#节点的hash值
+        self.nodevalue=None#节点下数据的hash值
+        
+class branch:#分支节点
+    def __init__(self):
+        self.type='branch'
+        self.children={'0':None,'1':None,'2':None,'3':None,'4':None,'5':None,
+                       'b':None,'6':None,'7':None,'8':None,'9':None,'a':None,
+                       'c':None,'d':None,'e':None,'f':None,'value':False}
+        #字典中的value为终止符
+class tree:
+    def __init__(self,tree=None):
+        if tree!=None:
+            self.root=tree#构建MPT树
+        else:#root创建新的扩展节点
+            self.root=self.make_extension()
+            self.root.prefix='root'
+            self.nodehash=None#节点的hash值
+            self.nodevalue=None#节点下数据的hash值
+     #创建叶子节点
+    def make_leaf(self,prefix,key,value):
+        temp=leaf()
+        temp.key=key
+        temp.prefix=prefix
+        temp.value=value
+        temp.nodevalue=sha256(value.encode('utf-8')).hexdigest()
+        temp.nodehash=sha256(str(temp).encode('utf-8')).hexdigest()
+        return temp
 
+    #创建扩展节点
+    def make_extension(self):
+        temp= extension()
+        return temp
+
+    #获取差值索引
+    def different(self,node,key):
+        #找到key与前缀更长的长度
+        if len(key)<len(node.prefix):
+            length=len(key)
+        else:
+            length=len(node.prefix)
+        count=0
+        while count<length:#找到key与node.prefix相同部分的长度并返回
+            if node.prefix[count]!=key[count]:
+                return count
+            cout+=1
+        return count
+        
+    def add(self,node,key,value):
+        #父节点为root时
+        if node.prefix=='root':
+            if self.root.value.children[key[0]]==None:
+                self.root.value.children[key[0]]=self.make_leaf(key[1::],key[1::],value)
+                node.value.children['value']=False
+                return
+            else:#root节点下扩展节点发生冲突，进行递归至无冲突为止
+                self.root.value.children[key[0]]=self.add(self.root.value.children[key[0]],key[1::],value)
+                return
+        #父节点不是根节点时
+        father=node
+        index=self.different(father,key)
+        prefix=key[:index:]#共同的前缀
+        #如果相同字符索引不同于共同前缀长度，则当前节点与father节点前缀不同
+        if index<len(father.prefix):
+            if father.type=='extension':
+                #父节点的类型为扩展节点，向前创建新的extension节点
+                return self.qian_extension(father,prefix,key[index::],index,value)
+            else:
+                #父节点的类型为叶子节点，向后创建新的扩展节点
+                return self.hou_extension(father,prefix,key[index::],index,value)
+        else:#进入扩展节点的branch中向下遍历
+            if father.value.children[key[index]]==None:
+                father.value.children[key[index]]=self.make_leaf(key[index+1::],key[index])
+                #插入叶子节点
+                father.value.children['value']=False
+                return father
+            else:#father.value.children[key[index]]不为空，发生冲突
+                father=self.add(father.value.children[key[index]],key[index::],value)
+                return father
+
+    #向前添加扩展节点,扩展节点与叶子结点冲突时需要
+    def qian_extension(self,node,prefix,key,index,value):
+        #创建新extension节点
+        temp=self.make_extension()
+        temp.prefix=prefix#共同前缀
+        temp.value.children[node.prefix[index]]=node#将旧的扩展节点放入分支表中
+        temp.value.children[node.prefix[index]].prefix=node.prefix[index+1::]#修改共同前缀
+        temp.value.children[key[0]]=self.make_leaf(key[1::],key[0],value)#插入叶子节点
+        return temp
+    #向后添加扩展节点,叶子节点与叶子结点冲突时需要
+    def hou_extension(self,node,prefix,key,index,value):
+        #创建新extension节点,node变成叶子结点
+        temp=self.make_extension()
+        temp.prefix=prefix#共同前缀
+        temp.value.children[node.key[index]]=node#将旧的扩展节点放入分支表中
+        temp.value.children[node.key[index]].key=node.key[index+1::]#修改共同前缀
+        temp.value.children[key[0]]=self.make_leaf(key[1::],key[0],value)#插入叶子节点
+        return temp
+    
+    def print_tree(self,node):
+        print('extension of prefix',node.prefix)
+        for key in node.value.children:
+            if key=='value':
+                break
+            if node.value.children[key]==None:
+                continue
+            elif node.value.children[key].type=='leaf':
+                print('branch',key)
+                print('leaf of key',node.value.children[key].key)
+            elif node.value.children[key].type=='extension':
+                print('branch',key)
+                self.print_tree('leaf of key',node.value.children[key])
+                
+    #遍历MPT树，自下向上对扩展节点的value和hash进行更新
+    def update_tree(self,node):
+        #聚合扩展节点下branch表中非空节点的value值，产生自对聚合结果的hash
+        temp = ''
+        #当节点状态为True，即已更新，直接返回当前值
+        if node.value.children['value'] == True:
+            return node.node_value
+        #若未更新
+        for key in node.value.children:
+            if key == 'value':
+                break
+            if node.value.children[key] == None:
+                continue
+            if node.value.children[key].type == 'leaf':
+                #聚合叶子节点
+                temp = temp + node.value.children[key].nodevalue
+            elif node.value.children[key].type == 'extension':
+                #聚合扩展节点，同时向下递归遍历
+                temp = temp + self.update_tree(node.value.children[key])
+        #修改状态，表示已更新
+        node.value.children['value'] = True
+        #更新节点value，hash值
+        node.node_value = sha256(temp.encode()).hexdigest()
+        node.node_hash = sha256(str(node).encode()).hexdigest()
+        print('prefix:',node.prefix)
+        print('node_value:',node.nodevalue)
+        return node
+
+
+    def add_update(self,key,value,node=None):
+        if node==None:
+            node=self.root
+        self.add(node,key,value)
+        return self.update_tree(self.root)
+t=tree()
+a=t.add_update('123','a')
+t.print_tree(a)

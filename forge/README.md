@@ -25,7 +25,8 @@ s = k+edmod n
 Signature is: (R,s)   
 Verify (R,s) of м with P    
 Check sG vs R+eР    
-sG =(k+ed)G = kG +edG = R+eP    
+sG =(k+ed)G = kG +edG = R+eP   
+
 伪造签名通过验证：  
 A= (r,s) is valid signature of m with secret key d.   
 If only the hash of the signed message is required.     

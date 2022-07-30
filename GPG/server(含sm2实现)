@@ -22,141 +22,86 @@ private_key = 0x1649AB77A00637BD5E2EFE283FBF353534AA7F7CB89463F208DDBC2920BB0DA0
 
 #随机产生1<=k<=n-1
 k = 0x4C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F
-#椭圆曲线上的不同点加法运算
-##def elliptic_add(p,q):
-##    if p==[0,0] and q==[0,0]:return [0,0]
-##    elif p==[0,0]:return q
-##    elif q==[0,0]:return p
-##    else:
-##        #保证p[0]<=q[0]
-##        if p[0]>q[0]:
-##            temp=p
-##            p=q
-##            q=temp
-##        r=[]
-##        #当P！=Q时，两点纵坐标相减的值与横坐标相减的值相除就是直线的斜率
-##        slope=(q[1]-p[1])*number.inverse(q[0]-p[0],P)%P
-##        r.append((slope**2-p[0]-q[0])%P)
-##        r.append((slope*(p[0]-r[0])-p[1])%P)
-##        return (r[0],r[1])
-###椭圆曲线上的同一点加法运算（*2运算）
-##def elliptic_double(p):
-##    #当P=Q，计算过P(Q)点切线的斜率为椭圆曲线公式两边求导相除：λ = (3*p[0]² + A)/2*p[1]
-##    r=[]
-##    slope=(3*(p[0]**2) + A)*number.inverse(2*p[1],P)%P
-##    r.append((slope**2-2*p[0])%P)
-##    r.append((slope*(p[0]-r[0])-p[1])%P)
-##    return (r[0],r[1])
-###椭圆曲线上的乘法运算
-##def elliptic_multiply(s,p):
-##    n=p
-##    r=[0,0]#无穷远点
-##    s_bin=bin(s)[2:]#转化为二进制
-##    s_len=len(s_bin)#二进制长度
-##    for i in reversed(range(s_len)):#从s_len-1到0逐位计算
-##        if s_bin[i]=='1':
-##            r=elliptic_add(r,n)
-##        n=elliptic_double(n)#n乘2,继续循环
-##    return r
-##def shash(s):
-##    sha=sha256()
-##    sha.update(s.encode())
-##    return sha.hexdigest() 
-##def KDF(x,klen):
-##    c=1
-##    k=""
-##    for i in range(klen//256):
-##        k+=shash(x+bin(c)[2:].zfill(32))
-##        c+=1
-##    #取剩余部分
-##    if klen%256!=0:
-##        k+=shash(x+bin(c)[2:].zfill(32))[:(klen-int(klen//256)*256)//4]
-##    K=bin(int(k,16))[2:].zfill(klen)
-##    return bin(int(K,16))[2:].zfill(klen)
-##def bin_xor(s,t):
-##    res=""
-##    for i in range(len(s)):
-##        if s[i]==t[i]:
-##            res+='0'
-##        else:
-##            res+='1'
-##    return res
-def ext_gcd(a, b): #扩展欧几里得算法 ，即 a mod b 的逆元,返回的第一个值为结果
+
+def gcd1(a, b): 
     if b == 0:
         return 1,0,a
     else:
-        x, y, gcd = ext_gcd(b, a % b) #递归直至余数等于0(需多递归一层用来判断)
-        x, y = y, (x - (a // b) * y) #辗转相除法反向推导每层a、b的因子使得gcd(a,b)=ax+by成立
+        x, y, gcd = gcd1(b, a % b) 
+        x, y = y, (x - (a // b) * y) 
         return x,y,gcd
-def sameAdd(x1,y1):
-    lamda1 = (3 * (x1 * x1)%p + A)%p
-    lamda2 = ext_gcd((2 * y1) % p,p)[0]
-    lamda = (lamda1 * lamda2) % p
-    x3 = ((lamda * lamda) % p - x1 - x1) % p
-    y3 = ((lamda * (x1 - x3)%p) % p - y1) % p
+#椭圆曲线上的同一点加法运算（*2运算）
+def elliptic_double(x1,y1):
+    t1 = (3 * (x1 * x1)%p + A)%p
+    t2 = gcd1((2 * y1) % p,p)[0]
+    t = (t1 * t2) % p
+    x3 = ((t * t) % p - x1 - x1) % p
+    y3 = ((t * (x1 - x3)%p) % p - y1) % p
     return x3,y3
-def NsameAdd(x1,y1,x_G,y_G):
-    lamda1 = (y_G - y1) % p
-    lamda2 = ext_gcd((x_G - x1) % p,p)[0]
-    lamda = (lamda1 * lamda2) % p
-    x3 = ((lamda * lamda) % p - x1 - x_G) % p
-    y3 = ((lamda * (x1 - x3)%p) % p - y1) % p
+#椭圆曲线上的不同点加法运算
+def elliptic_add(x1,y1,x_G,y_G):
+    t1 = (y_G - y1) % p
+    t2 =gcd1((x_G - x1) % p,p)[0]
+    t = (t1 * t2) % p
+    x3 = ((t * t) % p - x1 - x_G) % p
+    y3 = ((t * (x1 - x3)%p) % p - y1) % p
     return x3,y3
+#椭圆曲线上的乘法运算
 def multiply(x1,y1,k,x_G,y_G):
     if k == 2:
-        return sameAdd(x1,y1)
+        return elliptic_double(x1,y1)
     if k == 3:
-        x1,y1 = sameAdd(x1,y1)
-        return NsameAdd(x1,y1,x_G,y_G)
+        x1,y1 = elliptic_double(x1,y1)
+        return elliptic_add(x1,y1,x_G,y_G)
     if k % 2 == 0:
         x1,y1 = multiply(x1, y1, k // 2,x_G,y_G)
-        x1,y1 = sameAdd(x1,y1)
+        x1,y1 = elliptic_double(x1,y1)
         return x1,y1
     if k % 2 == 1:
         x1,y1 = multiply(x1, y1, (k - 1) // 2,x_G,y_G)
-        x1,y1 = sameAdd(x1,y1)
-        x1,y1 = NsameAdd(x1,y1,x_G,y_G)
+        x1,y1 = elliptic_double(x1,y1)
+        x1,y1 = elliptic_add(x1,y1,x_G,y_G)
         return x1,y1
 def Point_bit(x1,y1):
     X1 = bin(x1)[2:].zfill(256)
     Y1 = bin(y1)[2:].zfill(256)
-    return '00000100' + X1 + Y1  #选用未压缩格式
+    return '00000100' + X1 + Y1  
 def SHA256(str):
     m = sha256()  # 构建sha256对象
-    m.update(str.encode(encoding='utf-8'))  # 设置编码格式
-    str_sha256 = m.hexdigest()  # hexdigest()将加密字符串 生成十六进制数据字符串值
+    m.update(str.encode(encoding='utf-8'))
+    str_sha256 = m.hexdigest()
+    # hexdigest()将加密字符串 生成十六进制数据字符串值
     return str, str_sha256
+#扩展密钥方案
 def KDF(x,klen):
-    ct = 0x00000001
-    K = ""
-    for i in range(1,klen // 256):  # 调用的SHA256哈希函数，故v = 256
-        ct = ct + 1
-        K = K + SHA256(x+bin(ct)[2:].zfill(32))[1]
-    if klen % 256 != 0:
-        K = K + SHA256(x+bin(ct)[2:].zfill(32))[1][:(klen-256*int(klen // 256))//4]
-    else:
-        K = K + SHA256(x+bin(ct)[2:].zfill(32))[1]
-
-    K = bin(int(K, 16))[2:].zfill(klen) #16进制字符串转2 进制
-    return K
-def xor(bit_M,t):
+    ct = 1
     res = ""
-    for i in range(len(bit_M)):
-        add = int(bit_M[i]) + int(t[i])
+    for i in range(1,klen // 256): 
+        ct =ct+1
+        res=res+SHA256(x+bin(ct)[2:].zfill(32))[1]
+    if klen % 256 != 0:
+        res=res+ SHA256(x+bin(ct)[2:].zfill(32))[1][:(klen-256*int(klen // 256))//4]
+    else:
+        res=res+SHA256(x+bin(ct)[2:].zfill(32))[1]
+
+    res = bin(int(res, 16))[2:].zfill(klen) #16进制字符串转2 进制
+    return res
+def xor(bitm,t):
+    res = ""
+    for i in range(len(bitm)):
+        add = int(bitm[i]) + int(t[i])
         if add == 1:
             res = res + "1"
         else:
             res = res + "0"
     return res
 def bit_Point(hexC1):
-    #为什么！这么简单的问题那本书上回答的如此晦涩难懂!
     x = int(hexC1[-128:-64], 16)
     y = int(hexC1[-64:], 16)
     if int(hexC1[:2], 16) == 4:
         return x, y
 def Point_C1_in(Point_C1):
     x,y = Point_C1
-    # y*y=x*x*x+a*x+b 检测方程
     temp1 = y * y % p
     temp2 = (x * x * x + A * x + B) % p
     if temp1 == temp2:
@@ -171,7 +116,7 @@ def decrypt(C,private_key):
     #下面进行解密工作
     Point_C1 =  bit_Point(hexC1) #将C1转化为椭圆曲线上的点
     if(1 - Point_C1_in(Point_C1)): #看点是否在椭圆曲线上
-        exit("坏了，错了！")
+        exit(-1)
     #无穷远点在这里并没有考虑
     x2,y2 = Point_C1
     x2,y2 = multiply(x2,y2,private_key,Point_C1[0],Point_C1[1]) #计算倍点并转化为2进制数比特串
@@ -193,43 +138,7 @@ def decrypt(C,private_key):
     print(MM_ming.decode())
     #print(hex(int(MM_ming_bin,2))[2:])
     return MM_ming.decode()
-##    clen=len(c)
-##    hexC1=c[:130]
-##    hexC2=c[130:clen-64]
-##    hexC3=c[clen-64:]
-##    if int(hexC1[:2],16)==4:
-##        C1=(int(hexC1[-128:-64],16),int(hexC1[-64:],16))
-##    else:
-##        print("密文有误")
-##    Cb=elliptic_multiply(sk,C1)
-##    x_2=bin(Cb[0])[2:].zfill(256)
-##    y_2=bin(Cb[1])[2:].zfill(256)
-##    binlenC2=len(hexC2)*4
-##    binC2=bin(int(hexC2,16))[2:].zfill(binlenC2)
-##    t=KDF(x_2+y_2,len(binC2))
-##    binm=bin_xor(binC2,t)
-##    u=shash(x_2+binm+y_2)
-##    if u!=hexC3:
-##        print("解密明文非原明文")
-##    #hexm=hex(int(binm,2))[2:].zfill(len(binm)//4)
-##    begin = 0
-##    MM_ming_bin = ''
-##    for i in  binm:
-##        if i == '1':
-##            begin = 1
-##        if begin == 1:
-##            MM_ming_bin += i
-##    MM_ming = bytes.fromhex(hex(int(MM_ming_bin,2))[2:])
-##    print("解密生成的字符串为： " + str(MM_ming))
-##    return hex(int(MM_ming_bin,2))[2:]
-
-##def generate_key():
-##    private_key=random.randint(1,N)
-##    temp=G
-##    public_key=multiply(temp[0],temp[1],private_key,G_X,G_Y)
-##    return private_key,public_key
-##
-##private_key,public_key=generate_key()    
+ 
 server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 server.settimeout(60)
 host = '127.0.0.1'
@@ -267,5 +176,5 @@ except BaseException as e:
     print("出现异常：")
     print(repr(e))
 finally:
-    server.close()                    # 关闭连接
+    server.close()                   
     print("关闭链接")

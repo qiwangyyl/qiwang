@@ -112,8 +112,9 @@ try:
     print('s3',s3)
     s3=int(s3)
     s=((d1*k1)*s2+d1*s2-r)%N
-    sig=(r,s)
-    print("签名:",sig)
+    if s!=0 or s!=N-r:
+        sig=(r,s)
+        print("签名:",sig)
 
 except BaseException as e:
     print("出现异常：")

@@ -12,12 +12,17 @@ W’j ← Wj⊕Wj+4
 ##  压缩函数
 输入链接变量和消息字，A,B,C,D,E,F,G,H为8组数据分组，进行64轮处理，返回处理后的A,B,C,D,E,F,G,H。V与压缩函数后的值异或成为链接变量或者最后的杂凑值。
 ##  优化
-采用多线程进行优化，数据依赖性大，循环展开也不会有太好的并行效果。采用字符串使一组消息一起处理。
+采用多线程进行优化，由于数据依赖性大，循环展开也不会有太好的并行效果。在该实验中采用字符串使一组消息一起处理。
+多线程：
+![image](https://user-images.githubusercontent.com/105595347/182003267-780a0a8a-a90e-4640-9d7e-db247b317430.png)
+
 ## 运行指导
 在visual studio上运行
 ## 运行截图
 ![image](https://user-images.githubusercontent.com/105595347/182003148-cb867f78-54f3-42c6-9e25-c53c63316abe.png)
 ![image](https://user-images.githubusercontent.com/105595347/182003168-02fdd4b8-735a-4608-9593-ab8a8469b83d.png)
+优化后的结果：
+![image](https://user-images.githubusercontent.com/105595347/182003223-ba7458da-d2a9-453d-ac76-53079ae9956a.png)
 
 ## 贡献
 个人独立完成

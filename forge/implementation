@@ -87,7 +87,6 @@ def verify1(e,r,s):
     point=elliptic_add(point1,point2)
     return point[0]==r
 
-#7.伪装中本聪
 def forge(r, s):
     u = random.randint(1, N - 1)
     v = random.randint(1, N - 1)

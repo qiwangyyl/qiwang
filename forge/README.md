@@ -26,4 +26,22 @@ Signature is: (R,s)
 Verify (R,s) of м with P    
 Check sG vs R+eР    
 sG =(k+ed)G = kG +edG = R+eP    
+伪造签名通过验证：  
+A= (r,s) is valid signature of m with secret key d.   
+If only the hash of the signed message is required.     
+Then anyone can forge signature A'=(r' ,s') for d   
+(Anyone can pretend to be someone else)   
+Ecdsa verification is to verify:    
+s^(-1)(eG+rP)= (x ,y')= R',r'= x'mod n == r ?.   
+To forge, choose u,v ∈Fn
+Compute R'= (x',y') = uG +vP
+Choose r'= x' mod n, to pass verification, we need. s'^(-1)(e'G+r'P)= uG+ vP
+s'^(-1)e' = u mod n =>e'= r'uv^(-1)mod n.     
+s'^(-1)r' = v mod n => s'= r'v^(-1) mod n   
+A'=(r' ,s') is a valid signature of e' with secret key d    
+# 运行指导
+在idel上运行
+# 运行截图
 
+# 贡献
+个人独立完成

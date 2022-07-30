@@ -42,6 +42,7 @@ A'=(r' ,s') is a valid signature of e' with secret key d
 # 运行指导
 在idel上运行
 # 运行截图
+![image](https://user-images.githubusercontent.com/105595347/181871690-9fd02822-ddc7-404a-9851-f1260fc6d310.png)
 
 # 贡献
 个人独立完成

@@ -34,7 +34,8 @@ Randomly generate k2∈[1,n - 1], compute Q2 =k2*G
 Randomly generate k3 ∈ [1,n- 1], compute k3*Q1 +Q2 = (x1,y1)    
 Compute r=x1+e mod n(r!=0)    
 Compute S2=d2*k3 mod n   
-Compute S3 = d2(r + k2)mod n    
+Compute S3 = d2(r + k2)mod n   
+发送r,s2,s3   
 # 运行指导
 运行在IDEL上
 # 截图

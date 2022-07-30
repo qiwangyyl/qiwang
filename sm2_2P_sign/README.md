@@ -1,9 +1,9 @@
 # 代码说明
-Public key:     
+该过程中的公钥Public key:     
 P = [(d1d2)^(-1)]G    
 Private key: d = (d1d2)^(-1) - 1
 
-Signature   
+该过程中的签名过程Signature：   
 (k1*k3 + kz)G = (x1,y1)   
 r=(x1+e)modn    
 s=(1+d)^(-1)*((k1*k3 + k2)-r.d) mod n   
@@ -20,7 +20,8 @@ Randomly generate k1 ∈ [1,n-1], compute Q1 = k1*G
 
 (5) 接受r,s2,s3   
 Generate signature (r,s)       
-Compute s = (d1*k1)*S2 +d1*S3-r mod n  If s！=0 or s ！=n-r , output signature (r,s)    
+Compute s = (d1*k1)*S2 +d1*S3-r mod n     
+If s！=0 or s ！=n-r , output signature (r,s)    
 
 对方B：    
 (1) Generate sub private key d2∈[1,n- 1]

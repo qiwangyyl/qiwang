@@ -1,1 +1,113 @@
+import math
+import secrets
+from Crypto.Util import number
+import random
+A = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFC
+B = 0x28E9FA9E9D9F5E344D5A9E4BCF6509A7F39789F515AB8F92DDBCBD414D940E93
+#有限域的阶
+P = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFF
+G_X = 0x32c4ae2c1f1981195f9904466a39c9948fe30bbff2660be1715a4589334c74c7
+G_Y = 0xbc3736a2f4f6779c59bdcee36b692153d0a9877cc62a474002df32e52139f0a0
+#椭圆曲线的阶
+N = 0xFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123
+G = (G_X, G_Y)#G为基点
 
+#生成公私钥    
+
+#椭圆曲线上的不同点加法运算
+def elliptic_add(p,q):
+    if p==q:return elliptic_double(p)
+    elif p==[0,0]:return q
+    elif q==[0,0]:return p
+    else:
+        #保证p[0]<=q[0]
+        if p[0]>q[0]:
+            temp=p
+            p=q
+            q=temp
+        r=[]
+        #当P！=Q时，两点纵坐标相减的值与横坐标相减的值相除就是直线的斜率
+        slope=(q[1]-p[1])*number.inverse(q[0]-p[0],P)%P
+        r.append((slope**2-p[0]-q[0])%P)
+        r.append((slope*(p[0]-r[0])-p[1])%P)
+        return [r[0],r[1]]
+#椭圆曲线上的同一点加法运算（*2运算）
+def elliptic_double(p):
+    if p==[0,0] and q==[0,0]:
+        return [0,0]
+    #当P=Q，计算过P(Q)点切线的斜率为椭圆曲线公式两边求导相除：λ = (3*p[0]² + A)/2*p[1]
+    r=[]
+    slope=(3*(p[0]**2) + A)*number.inverse(2*p[1],P)%P
+    r.append((slope**2-2*p[0])%P)
+    r.append((slope*(p[0]-r[0])-p[1])%P)
+    return [r[0],r[1]]
+
+#椭圆曲线上的乘法运算
+def elliptic_multiply(s,p):
+    n=p
+    r=[0,0]#无穷远点
+    s_bin=bin(s)[2:]#转化为二进制
+    s_len=len(s_bin)#二进制长度
+    for i in reversed(range(s_len)):#从s_len-1到0逐位计算
+        if s_bin[i]=='1':
+            r=elliptic_add(r,n)
+        n=elliptic_double(n)#n乘2,继续循环
+    return r
+#签名生成（r,s）
+def sign(mes):
+    e=hash(mes)
+    if e<=0:
+        e=N-e
+    print("e",e)
+    k=secrets.randbelow(P)#0-P的随机数
+    point1=elliptic_multiply(k,G)#该点为k*G
+    print("生成的椭圆曲线上的点：",point1)
+    r=point1[0]%P
+    #计算s=((k)^(-1)⋅(e+r⋅private_key))mod n
+    s=(number.inverse(k,N)*(e+r*private_key))%N
+    return (r,s)
+#验证（r,s）
+def verify(m,r,s):
+    e = hash(m)#e=Hash(m)
+    w=number.inverse(s,N)
+    e1=e*w
+    r1=r*w
+    point1=elliptic_multiply(e1,G)
+    point2=elliptic_multiply(r1,public_key)
+    point=elliptic_add(point1,point2)
+    print(r)
+    print(point[0])
+    return point[0]==r
+def verify1(e,r,s):
+    w=number.inverse(s,N)
+    e1=e*w
+    r1=r*w
+    point1=elliptic_multiply(e1,G)
+    point2=elliptic_multiply(r1,public_key)
+    point=elliptic_add(point1,point2)
+    return point[0]==r
+
+#7.伪装中本聪
+def forge(r, s):
+    u = random.randint(1, N - 1)
+    v = random.randint(1, N - 1)
+    point1=elliptic_multiply(u,G)
+    point2=elliptic_multiply(v,public_key)
+    point=elliptic_add(point1,point2)
+    rr=point[0]
+    ee = (rr* u * number.inverse(v,N)) % N
+    ss = (rr * number.inverse(v,N)) % N
+    return verify1(ee,rr,ss)
+def generate_key():
+    #私钥：大整数
+    #公钥：椭圆曲线上的点,有基点和私钥生成
+    prikey=int(secrets.token_hex(32),16)#返回十六进制随机文本字符串,有n个字节的随机字节，每个字节转换为两个十六进制数字
+    pubkey=elliptic_multiply(prikey,G)
+    return prikey,pubkey
+private_key,public_key=generate_key()
+m='abx'
+r,s=sign(m)
+print("签名为:",r,s)
+print("验证结果为：",verify(m,r,s))
+d1=forge(r,s)
+print("破解是否成功：",d1)

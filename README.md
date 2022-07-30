@@ -1,8 +1,9 @@
 1.小组成员王淇，账户名称为wqlly,个人独立完成。  
 2.项目简介
+
 项目简介	| 项目名称	| 完成人
------------|-----------|-------------
- 	| implement the naïve birthday attack of reduced SM3 |	王淇
+----------------------------------------------------------------|--------------------------------------------------------------------------------------|-------------
+ 实现生日碰撞攻击    | implement the naïve birthday attack of reduced SM3 |	王淇
   	|   implement the Rho method of reduced SM3	|王淇
 	| do your best to optimize SM3 implementation (software)	王淇
 	| implement length extension attack for SM3	王淇

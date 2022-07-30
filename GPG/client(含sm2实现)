@@ -21,88 +21,91 @@ private_key = 0x1649AB77A00637BD5E2EFE283FBF353534AA7F7CB89463F208DDBC2920BB0DA0
 
 #随机产生1<=k<=n-1
 k = 0x4C62EEFD6ECFC2B95B92FD6C3D9575148AFA17425546D49018E5388D49DD7B4F
-def ext_gcd(a, b): #扩展欧几里得算法 ，即 a mod b 的逆元,返回的第一个值为结果
+
+def gcd1(a, b): 
     if b == 0:
         return 1,0,a
     else:
-        x, y, gcd = ext_gcd(b, a % b) #递归直至余数等于0(需多递归一层用来判断)
-        x, y = y, (x - (a // b) * y) #辗转相除法反向推导每层a、b的因子使得gcd(a,b)=ax+by成立
+        x, y, gcd = gcd1(b, a % b) 
+        x, y = y, (x - (a // b) * y) 
         return x,y,gcd
-def sameAdd(x1,y1):
-    lamda1 = (3 * (x1 * x1)%p + A)%p
-    lamda2 = ext_gcd((2 * y1) % p,p)[0]
-    lamda = (lamda1 * lamda2) % p
-    x3 = ((lamda * lamda) % p - x1 - x1) % p
-    y3 = ((lamda * (x1 - x3)%p) % p - y1) % p
+#椭圆曲线上的同一点加法运算（*2运算）
+def elliptic_double(x1,y1):
+    t1 = (3 * (x1 * x1)%p + A)%p
+    t2 = gcd1((2 * y1) % p,p)[0]
+    t = (t1 * t2) % p
+    x3 = ((t * t) % p - x1 - x1) % p
+    y3 = ((t * (x1 - x3)%p) % p - y1) % p
     return x3,y3
-def NsameAdd(x1,y1,x_G,y_G):
-    lamda1 = (y_G - y1) % p
-    lamda2 = ext_gcd((x_G - x1) % p,p)[0]
-    lamda = (lamda1 * lamda2) % p
-    x3 = ((lamda * lamda) % p - x1 - x_G) % p
-    y3 = ((lamda * (x1 - x3)%p) % p - y1) % p
+#椭圆曲线上的不同点加法运算
+def elliptic_add(x1,y1,x_G,y_G):
+    t1 = (y_G - y1) % p
+    t2 =gcd1((x_G - x1) % p,p)[0]
+    t = (t1 * t2) % p
+    x3 = ((t * t) % p - x1 - x_G) % p
+    y3 = ((t * (x1 - x3)%p) % p - y1) % p
     return x3,y3
+#椭圆曲线上的乘法运算
 def multiply(x1,y1,k,x_G,y_G):
     if k == 2:
-        return sameAdd(x1,y1)
+        return elliptic_double(x1,y1)
     if k == 3:
-        x1,y1 = sameAdd(x1,y1)
-        return NsameAdd(x1,y1,x_G,y_G)
+        x1,y1 = elliptic_double(x1,y1)
+        return elliptic_add(x1,y1,x_G,y_G)
     if k % 2 == 0:
         x1,y1 = multiply(x1, y1, k // 2,x_G,y_G)
-        x1,y1 = sameAdd(x1,y1)
+        x1,y1 = elliptic_double(x1,y1)
         return x1,y1
     if k % 2 == 1:
         x1,y1 = multiply(x1, y1, (k - 1) // 2,x_G,y_G)
-        x1,y1 = sameAdd(x1,y1)
-        x1,y1 = NsameAdd(x1,y1,x_G,y_G)
+        x1,y1 = elliptic_double(x1,y1)
+        x1,y1 = elliptic_add(x1,y1,x_G,y_G)
         return x1,y1
 def Point_bit(x1,y1):
     X1 = bin(x1)[2:].zfill(256)
     Y1 = bin(y1)[2:].zfill(256)
-    return '00000100' + X1 + Y1  #选用未压缩格式
+    return '00000100' + X1 + Y1  
 def SHA256(str):
     m = sha256()  # 构建sha256对象
-    m.update(str.encode(encoding='utf-8'))  # 设置编码格式
-    str_sha256 = m.hexdigest()  # hexdigest()将加密字符串 生成十六进制数据字符串值
+    m.update(str.encode(encoding='utf-8'))
+    str_sha256 = m.hexdigest()
+    # hexdigest()将加密字符串 生成十六进制数据字符串值
     return str, str_sha256
+#扩展密钥方案
 def KDF(x,klen):
-    ct = 0x00000001
-    K = ""
-    for i in range(1,klen // 256):  # 调用的SHA256哈希函数，故v = 256
-        ct = ct + 1
-        K = K + SHA256(x+bin(ct)[2:].zfill(32))[1]
-    if klen % 256 != 0:
-        K = K + SHA256(x+bin(ct)[2:].zfill(32))[1][:(klen-256*int(klen // 256))//4]
-    else:
-        K = K + SHA256(x+bin(ct)[2:].zfill(32))[1]
-
-    K = bin(int(K, 16))[2:].zfill(klen) #16进制字符串转2 进制
-    return K
-def xor(bit_M,t):
+    ct = 1
     res = ""
-    for i in range(len(bit_M)):
-        add = int(bit_M[i]) + int(t[i])
+    for i in range(1,klen // 256): 
+        ct =ct+1
+        res=res+SHA256(x+bin(ct)[2:].zfill(32))[1]
+    if klen % 256 != 0:
+        res=res+ SHA256(x+bin(ct)[2:].zfill(32))[1][:(klen-256*int(klen // 256))//4]
+    else:
+        res=res+SHA256(x+bin(ct)[2:].zfill(32))[1]
+
+    res = bin(int(res, 16))[2:].zfill(klen) #16进制字符串转2 进制
+    return res
+def xor(bitm,t):
+    res = ""
+    for i in range(len(bitm)):
+        add = int(bitm[i]) + int(t[i])
         if add == 1:
             res = res + "1"
         else:
             res = res + "0"
     return res
 def bit_Point(hexC1):
-    #为什么！这么简单的问题那本书上回答的如此晦涩难懂!
     x = int(hexC1[-128:-64], 16)
     y = int(hexC1[-64:], 16)
     if int(hexC1[:2], 16) == 4:
         return x, y
 def Point_C1_in(Point_C1):
     x,y = Point_C1
-    # y*y=x*x*x+a*x+b 检测方程
     temp1 = y * y % p
     temp2 = (x * x * x + A * x + B) % p
     if temp1 == temp2:
         return 1
     return 0
-
 def encrypt(data):
     x1 = x_G
     y1 = y_G
@@ -127,27 +130,7 @@ def encrypt(data):
     C = hexC1 + hexC2 + C3[1] #生成密文咯！！
     print("密文是： " + C)
     return C
-##    x,y=public_key#提取公钥
-##    m=int(bytes.hex(data),16)
-##    k=random.randint(1,N)#生成随机数k
-##    C1=elliptic_multiply(k,G)#计算C1
-##    binC1='00000100'+bin(C1[0])[2:].zfill(256)+bin(C1[1])[2:].zfill(256)
-##    Cb=elliptic_multiply(k,public_key)#计算Cb
-##    x_2=bin(Cb[0])[2:].zfill(256)5
-##    y_2=bin(Cb[1])[2:].zfill(256)
-##    bitm=bin(m)[2:]
-##    bitm=(8-len(bitm)%8)*'0'+bitm
-##    mlen=len(bitm)
-##    t=KDF(x_2+y_2,mlen)
-##    if t.count('0')==mlen:
-##        print("错误")
-##        return -1
-##    binC2=bin_xor(bitm,t)
-##    C3=shash(x_2+bitm+y_2)
-##    hexC1=hex(int(binC1,2))[2:].zfill(130)
-##    hexC2=hex(int(binC2,2))[2:].zfill(mlen//4)
-##    return hexC1+hexC2+C3
-  
+
 def create_key(data):#生成对称加密密钥，长度16的字符串
     m= md5()
     m.update(data.encode("utf-8"))
@@ -176,4 +159,3 @@ sendBytes2= client.send(enc_key.encode())
 print("客户端发送了："+'wq')
 localTime = time.asctime( time.localtime(time.time()))
 print(localTime,'服务器成功接受消息')
-

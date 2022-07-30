@@ -9,7 +9,7 @@ MPT树中的节点包括空节点（在代码中是一个空串）、叶子节�
 ![image](https://user-images.githubusercontent.com/105595347/181915590-1af0472f-2c20-408c-b2dd-6b8d7db09bce.png)
 
 分支节点包括类型与长为17的字典，分支节点前16个元素对应着key中的16个可能的十六进制字符，如果有一个[key,value]对在这个分支节点终止，最后一个元素代表一个值，即分支节点既可以搜索路径的终止也可以是路径的中间节点，在该实验的测试代码中并未加入太多节点，如下所示：
-![image](https://user-images.githubusercontent.com/105595347/181915238-6fbfed00-1809-459a-b61b-fa789aef835a.png)
+![image](https://user-images.githubusercontent.com/105595347/181915664-e1cd96e0-0ca6-49e3-ae0f-897d31e04b61.png)
 
 定义树的类，其中包括初始化函数、创建叶子节点、创建扩展节点、获取前缀不同处索引、添加节点、向前添加扩展节点、向后添加扩展节点、更新树的value和hash值的函数。    
 

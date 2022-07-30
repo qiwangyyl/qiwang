@@ -34,12 +34,18 @@ Then anyone can forge signature A'=(r' ,s') for d
 (Anyone can pretend to be someone else)   
 Ecdsa verification is to verify:    
 s^(-1)(eG+rP)= (x ,y')= R',r'= x'mod n == r ?.   
-To forge, choose u,v ∈Fn
-Compute R'= (x',y') = uG +vP
-Choose r'= x' mod n, to pass verification, we need. s'^(-1)(e'G+r'P)= uG+ vP
+To forge, choose u,v ∈Fn    
+Compute R'= (x',y') = uG +vP    
+Choose r'= x' mod n, to pass verification, we need. s'^(-1)(e'G+r'P)= uG+ vP    
 s'^(-1)e' = u mod n =>e'= r'uv^(-1)mod n.     
 s'^(-1)r' = v mod n => s'= r'v^(-1) mod n   
-A'=(r' ,s') is a valid signature of e' with secret key d    
+A'=(r' ,s') is a valid signature of e' with secret key d   
+
+定义椭圆曲线上的乘法运算为elliptic_multiply，椭圆曲线上的同一点加法运算（*2运算）为elliptic_double，椭圆曲线上的不同点加法运算为elliptic_add。generate_key生成公私钥对，sign函数进行签名，verify函数进行验证，verify1函数在已知e而不知道m的情况下进行验证。forge函数进行伪装。
+
+参数设置如下：
+![image](https://user-images.githubusercontent.com/105595347/181921163-f34da2b5-fc0f-4c89-bbb4-75760dccb67d.png)
+
 # 运行指导
 在idel上运行
 # 运行截图

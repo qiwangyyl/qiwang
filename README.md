@@ -1,6 +1,19 @@
-1.小组成员王淇，账户名称wqlly,个人独立完成。  
-2.
-
+1.小组成员王淇，账户名称为wqlly,个人独立完成。  
+2.项目简介
+implement the naïve birthday attack of reduced SM3   
+implement the Rho method of reduced SM3   
+implement length extension attack for SM3   
+do your best to optimize SM3 implementation (software)      
+Impl Merkle Tree following RFC6962    
+实现及优化SM4   
+report on the application of this deduce technique in Ethereum with ECDSA   
+impl sm2 with RFC6979   
+Implement the above ECMH scheme   
+Implement a PGP scheme with SM2   
+implement sm2 2P sign with real network communication   
+implement sm2 2P decrypt with real network communication  
+forge a signature to pretend that you are Satoshi   
+research report on MPT  
 3.完成项目：   
 implement the naïve birthday attack of reduced SM3   
 implement the Rho method of reduced SM3   

@@ -3,20 +3,20 @@
 
 项目简介	| 项目名称	| 完成人
 ----------------------------------------------------------------|--------------------------------------------------------------------------------------|-------------
- 实现生日碰撞攻击    | implement the naïve birthday attack of reduced SM3 |	王淇
-  	|   implement the Rho method of reduced SM3	|王淇
-	| do your best to optimize SM3 implementation (software)	王淇
-	| implement length extension attack for SM3	王淇
+ 随机选取两个消息，实现生日碰撞攻击    | implement the naïve birthday attack of reduced SM3 |	王淇
+选取一个数通过迭代计算并hash，找到hash值相等的两个消息|   implement the Rho method of reduced SM3	|王淇
+利用多线程实现sm3的优化| do your best to optimize SM3 implementation (software)	王淇
+通过添加一个附加消息来伪造消息可以计算出相应hash值| implement length extension attack for SM3	王淇
 生成十万节点的Merkle-Tree	| Impl Merkle Tree following RFC6962  |	王淇
 利用多线程、simd指令、循环展开优化 |	实现及优化SM4	| 王淇
 在椭圆曲线数字签名算法（ECDSA）下反推公钥	| report on the application of this deduce technique in Ethereum with ECDSA  |	王淇
 实现sm2时通过确定性的算法生成保密且唯一的k	| impl sm2 with RFC6979   |	王淇
-	|Implement the above ECMH scheme  |	王淇
-	|Implement a PGP scheme with SM2 | 	王淇
-	|implement sm2 2P sign with real network communication |	王淇
-	|implement sm2 2P decrypt with real network communication  |	王淇
-	| forge a signature to pretend that you are Satoshi  | 	王淇
-	|research report on MPT  |	王淇
+利用椭圆曲线上点的加减表示信息的增删|Implement the above ECMH scheme  |	王淇
+通过公钥加密私钥、私钥加密信息的方式传递消息|Implement a PGP scheme with SM2 | 	王淇
+socket编程实现真实网络上sm2签名|implement sm2 2P sign with real network communication |	王淇
+socket编程实现真实网络上sm2解密|implement sm2 2P decrypt with real network communication  |	王淇
+伪造e与签名通过验证| forge a signature to pretend that you are Satoshi  | 	王淇
+融合了默克尔树和前缀树两种树结构，存储任意长度的key-value键值对数据|research report on MPT  |	王淇
 
 3.完成项目：   
 implement the naïve birthday attack of reduced SM3   

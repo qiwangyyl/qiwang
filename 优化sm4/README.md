@@ -17,4 +17,4 @@
 ![image](https://user-images.githubusercontent.com/105595347/181127267-041f0733-5a95-40b7-98d0-c0bbaeedbe9e.png)
 
 # 贡献
-王淇独立完成
+个人独立完成

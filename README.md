@@ -38,15 +38,15 @@ implement sm2 2P sign with real network communication   |
 implement sm2 2P decrypt with real network communication | 
 forge a signature to pretend that you are Satoshi   |
 research report on MPT  |
-
+verify the above pitfalls with proof-of-concept code  |
 
 未完成项目|
 ------------------------------------|    
 Try to Implement this scheme(below) |
-verify the above pitfalls with proof-of-concept code  |
 PoC impl of the scheme, or do implement analysis by Google  |
 send a tx on Bitcoin testnet, and parse the tx data down to every bit, better write script yourself   |
 Find a key with hash value “sdu_cst_20220610” under a message composed of your name followed by your student ID. For example, “San Zhan 202000460001”.  |
 Find a 64-byte message under some k fulfilling that their hash value is symmetrical.  |
 ![image](https://user-images.githubusercontent.com/105595347/181213346-c85d0b42-a9b5-4c7f-835d-0fc893561f2d.png) |
 
+有问题的项目：verify the above pitfalls with proof-of-concept code只实现了一部分

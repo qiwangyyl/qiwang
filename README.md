@@ -1,5 +1,6 @@
-1.小组成员王淇，账户名称为wqlly,个人独立完成。  
-2.
+一.
+小组成员王淇，账户名称为wqlly,个人独立完成。  
+二.
 
 项目简介	| 项目名称	| 完成人
 ----------------------------------------------------------------|--------------------------------------------------------------------------------------|-------------
@@ -18,7 +19,7 @@ socket编程实现真实网络上sm2解密|implement sm2 2P decrypt with real ne
 伪造e与签名通过验证| forge a signature to pretend that you are Satoshi  | 	王淇
 融合了默克尔树和前缀树两种树结构，存储任意长度的key-value键值对数据|research report on MPT  |	王淇
 
-3.
+三.
 
 完成项目|
 ------------------------------------|
@@ -45,5 +46,6 @@ research report on MPT  |
 4.send a tx on Bitcoin testnet, and parse the tx data down to every bit, better write script yourself   
 5.Find a key with hash value “sdu_cst_20220610” under a message composed of your name followed by your student ID. For example, “San Zhan 202000460001”.  
 6.Find a 64-byte message under some k fulfilling that their hash value is symmetrical.  
-7.![image](https://user-images.githubusercontent.com/105595347/181213346-c85d0b42-a9b5-4c7f-835d-0fc893561f2d.png)
+7.
+![image](https://user-images.githubusercontent.com/105595347/181213346-c85d0b42-a9b5-4c7f-835d-0fc893561f2d.png)
 

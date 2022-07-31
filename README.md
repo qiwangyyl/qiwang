@@ -5,8 +5,8 @@
 ----------------------------------------------------------------|--------------------------------------------------------------------------------------|-------------
  随机选取两个消息，实现生日碰撞攻击    | implement the naïve birthday attack of reduced SM3 |	王淇
 选取一个数通过迭代计算并hash，找到hash值相等的两个消息|   implement the Rho method of reduced SM3	|王淇
-利用多线程实现sm3的优化| do your best to optimize SM3 implementation (software)	王淇
-通过添加一个附加消息来伪造消息可以计算出相应hash值| implement length extension attack for SM3	王淇
+利用多线程实现sm3的优化| do your best to optimize SM3 implementation (software)	|王淇
+通过添加一个附加消息来伪造消息可以计算出相应hash值| implement length extension attack for SM3	|王淇
 生成十万节点的Merkle-Tree	| Impl Merkle Tree following RFC6962  |	王淇
 利用多线程、simd指令、循环展开优化 |	实现及优化SM4	| 王淇
 在椭圆曲线数字签名算法（ECDSA）下反推公钥	| report on the application of this deduce technique in Ethereum with ECDSA  |	王淇

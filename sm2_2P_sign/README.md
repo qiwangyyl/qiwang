@@ -42,5 +42,5 @@ Compute S3 = d2(r + k2)mod n
 ![image](https://user-images.githubusercontent.com/105595347/181909095-a45555e5-97b2-4cf6-bc1e-908a40ba6200.png)
 
 # 贡献
-王淇独立完成
+个人独立完成
 

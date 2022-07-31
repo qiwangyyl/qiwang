@@ -1,5 +1,5 @@
 1.小组成员王淇，账户名称为wqlly,个人独立完成。  
-2.项目简介
+2.
 
 项目简介	| 项目名称	| 完成人
 ----------------------------------------------------------------|--------------------------------------------------------------------------------------|-------------
@@ -18,22 +18,27 @@ socket编程实现真实网络上sm2解密|implement sm2 2P decrypt with real ne
 伪造e与签名通过验证| forge a signature to pretend that you are Satoshi  | 	王淇
 融合了默克尔树和前缀树两种树结构，存储任意长度的key-value键值对数据|research report on MPT  |	王淇
 
-3.完成项目：   
-implement the naïve birthday attack of reduced SM3   
-implement the Rho method of reduced SM3   
-implement length extension attack for SM3   
-do your best to optimize SM3 implementation (software)      
-Impl Merkle Tree following RFC6962    
-实现及优化SM4   
-report on the application of this deduce technique in Ethereum with ECDSA   
-impl sm2 with RFC6979   
-Implement the above ECMH scheme   
-Implement a PGP scheme with SM2   
-implement sm2 2P sign with real network communication   
-implement sm2 2P decrypt with real network communication  
-forge a signature to pretend that you are Satoshi   
-research report on MPT  
-未完成项目：    
+3.
+
+完成项目|
+------------------------------------|
+implement the naïve birthday attack of reduced SM3   |
+implement the Rho method of reduced SM3   |
+implement length extension attack for SM3  | 
+do your best to optimize SM3 implementation (software)|      
+Impl Merkle Tree following RFC6962    |
+实现及优化SM4   |
+report on the application of this deduce technique in Ethereum with ECDSA   |
+impl sm2 with RFC6979   |
+Implement the above ECMH scheme   |
+Implement a PGP scheme with SM2   |
+implement sm2 2P sign with real network communication   |
+implement sm2 2P decrypt with real network communication | 
+forge a signature to pretend that you are Satoshi   |
+research report on MPT  |
+
+
+未完成项目：      
 Try to Implement this scheme(below) 
 verify the above pitfalls with proof-of-concept code  
 PoC impl of the scheme, or do implement analysis by Google  

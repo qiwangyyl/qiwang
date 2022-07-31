@@ -39,11 +39,11 @@ research report on MPT  |
 
 
 未完成项目：      
-Try to Implement this scheme(below) 
-verify the above pitfalls with proof-of-concept code  
-PoC impl of the scheme, or do implement analysis by Google  
-send a tx on Bitcoin testnet, and parse the tx data down to every bit, better write script yourself   
-Find a key with hash value “sdu_cst_20220610” under a message composed of your name followed by your student ID. For example, “San Zhan 202000460001”.  
-Find a 64-byte message under some k fulfilling that their hash value is symmetrical.  
-![image](https://user-images.githubusercontent.com/105595347/181213346-c85d0b42-a9b5-4c7f-835d-0fc893561f2d.png)
+1.Try to Implement this scheme(below) 
+2.verify the above pitfalls with proof-of-concept code  
+3.PoC impl of the scheme, or do implement analysis by Google  
+4.send a tx on Bitcoin testnet, and parse the tx data down to every bit, better write script yourself   
+5.Find a key with hash value “sdu_cst_20220610” under a message composed of your name followed by your student ID. For example, “San Zhan 202000460001”.  
+6.Find a 64-byte message under some k fulfilling that their hash value is symmetrical.  
+7.![image](https://user-images.githubusercontent.com/105595347/181213346-c85d0b42-a9b5-4c7f-835d-0fc893561f2d.png)
 
